@@ -1,0 +1,14 @@
+[mounts]
+shared_storage = ../shared_storage
+local_storage = ../local_storage
+inter_proc_storage = ../inter_proc_storage
+
+[worker]
+# ulimit, docker
+spawn_method = ulimit
+memory_limit = 250
+proc_num_limit = 4 # process limit per worker
+workers = 4 # number of workers
+start_port = 8091 # listening ports for workers 8091, 8092, 8093 ...
+
+
