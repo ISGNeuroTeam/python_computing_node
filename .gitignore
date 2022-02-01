@@ -128,3 +128,8 @@ inter_proc_storage
 
 # local docker-compose
 docker-compose-local.yml
+
+# socket files
+*.socket
+
+

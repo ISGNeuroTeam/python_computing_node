@@ -1,6 +1,7 @@
 import os
 import copy
 import configparser
+import uuid
 from pathlib import Path
 
 
@@ -10,6 +11,10 @@ defaults = {
         'local_storage': '../local_storage',
         'inter_proc_storage': '../inter_proc_storage',
     },
+    'execution_environment': {
+        'package': 'test_execution_environment',
+        'execution_environment_dir': '../execution_environment'
+    },
     'worker': {
         'spawn_method': 'ulimit',
         'memory_limit': 250,
@@ -17,6 +22,20 @@ defaults = {
         'workers': 4,
         'start_port': 8091,
     },
+    'computing_node':  {
+            'host_id': os.popen("hostid").read().strip(),
+            'type': 'test',
+            'health_check_interval': 3
+        },
+    'kafka_producer': {
+        'bootstrap_servers': 'localhost',
+        'acks': 'all',
+    },
+
+    'kafka_consumer': {
+        'bootstrap_servers': 'localhost:9092',
+        'group_id': 'complex_rest',
+    }
 }
 
 
@@ -70,6 +89,29 @@ def make_abs_paths(config_dict, dict_keys_list, base_dir):
         config_dict[section][option] = str(dir_path)
 
 
+def auto_generate_uuids_for_first_launch(config_path, dict_keys_list):
+    """
+    :config_path: full path to ini config
+    :param dict_keys_list: list of keys in dictionary where find uuid
+    """
+    config = configparser.RawConfigParser()
+
+    config.read(config_path)
+    for section in config:
+        print(section)
+    for section, option in dict_keys_list:
+        if section not in config:
+            config.add_section(section)
+        print('!!')
+        print(config[section][option])
+        if not (option in config[section] and config[section][option]):
+            print('generate')
+            config[section][option] = uuid.uuid4().hex
+
+    with open(config_path, 'w') as f:
+        config.write(f)
+
+
 def get_ini_config():
     """
     Read config passed in REST_CONF environment variable
@@ -87,6 +129,13 @@ def get_ini_config():
     else:
         conf_path = Path(conf_path_env).resolve()
 
+    auto_generate_uuids_for_first_launch(
+        str(conf_path),
+        [
+            ['computing_node', 'uuid']
+        ]
+    )
+
     config = configparser.ConfigParser()
 
     config.read(conf_path)
@@ -101,6 +150,8 @@ def get_ini_config():
         [
             ['mounts', 'shared_storage'],
             ['mounts', 'local_storage'],
+            ['mounts', 'inter_proc_storage'],
+            ['execution_environment', 'execution_environment_dir']
         ],
         node_source_dir
     )

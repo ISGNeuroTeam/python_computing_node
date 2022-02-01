@@ -6,6 +6,11 @@ BASE_SOURCE_DIR = Path(__file__).resolve().parent.parent
 worker_DIR = BASE_SOURCE_DIR / 'worker'
 
 
+class LaunchCommand():
+    def __init__(self, ):
+        pass
+
+
 class WorkerProcess:
     def __init__(self, spawn_method, port, proc_num_limit, memory_limit, inter_proc_storage, shared_storage, local_storage):
         """
@@ -28,10 +33,10 @@ class WorkerProcess:
 
         if self.spawn_method == 'ulimit':
             ulimit_memory_limit = memory_limit = self.memory_limit * 1024 * 1024
-            command = f'bash -c "export PYTHONPATH={str(BASE_SOURCE_DIR)} && ulimit -SH -u {self.proc_num_limit} -d {ulimit_memory_limit} && python -m worker {self.port} {self.inter_proc_storage} {self.shared_storage} {self.local_storage}" '
+            command = f'bash -c "export PYTHONPATH={str(BASE_SOURCE_DIR)} && ulimit -SH -u {self.proc_num_limit} -d {ulimit_memory_limit} && python -m worker {self.port} {self.inter_proc_storage} {self.shared_storage} {self.local_storage} " '
 
         elif self.spawn_method == 'docker':
-            command = f'docker run -m {self.memory_limit}m --pids-limit {self.proc_num_limit + 1} -v {str(worker_DIR)}:/worker/worker -v {self.local_storage}:/worker/local_storage -v {self.shared_storage}:/worker/shared_storage -p {self.port}:{self.port} worker python -m worker {self.port} {self.inter_proc_storage} {self.shared_storage} {self.local_storage}'
+            command = f'docker run -m {self.memory_limit}m --pids-limit {self.proc_num_limit + 1} -v {str(worker_DIR)}:/worker/worker -v {self.local_storage}:/worker/local_storage -v {self.shared_storage}:/worker/shared_storage worker python -m worker {self.port} /worker/inter_proc_storage /worker/shared_storage /worker/local_storage '
 
         else:
             raise ValueError('Unknown spawn method')

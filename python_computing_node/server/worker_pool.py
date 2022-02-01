@@ -1,31 +1,27 @@
 import asyncio
+from copy import copy
 
 from .worker_process import WorkerProcess
 
 
 class WorkerPool:
-    def __init__(self, workers_number, spawn_method, start_port, proc_num_limit, memory_limit,
-                 inter_proc_storage, shared_storage, local_storage,
-    ):
+    def __init__(self, worker_base_process, workers_count, start_port):
 
-        self._current_port = start_port - 1 # get_port function do increment
+        self._current_port = start_port - 1  # get_port function do increment
 
+        self._workers_count = workers_count
         # the list of workers
         self._worker_processes = self._create_workers(
-            workers_number, spawn_method, proc_num_limit, memory_limit,
-            inter_proc_storage, shared_storage, local_storage
+            worker_base_process, workers_count
         )
 
     def _create_workers(
-            self, workers_number, spawn_method, proc_num_limit, memory_limit,
-            inter_proc_storage, shared_storage, local_storage
+            self, worker_base_process, workers_count
     ):
         worker_processes = []
-        for _ in range(workers_number):
-            worker_proc = WorkerProcess(
-                spawn_method, self._get_port_for_new_worker(), proc_num_limit, memory_limit,
-                inter_proc_storage, shared_storage, local_storage
-            )
+        for _ in range(workers_count):
+            worker_proc = copy(worker_base_process)
+            worker_proc.change_port(self._get_port_for_new_worker())
             worker_processes.append(worker_proc)
         return worker_processes
 
@@ -49,6 +45,26 @@ class WorkerPool:
     async def run_worker_processes_forever(self):
         for worker_process in self._worker_processes:
             asyncio.create_task(self.run_worker_process_forever(worker_process))
+
+    async def make_job(self, node_job: bytes):
+        """
+        Chose a worker and send job to it
+        awaits result and return it
+        """
+        pass
+
+    def get_free_workers_count(self):
+        """
+        Returns number of free workers
+        """
+        pass
+
+    def get_workers_count(self):
+        """
+        Returns total workers count
+        """
+        return self._workers_count
+
 
     def terminate(self):
         """

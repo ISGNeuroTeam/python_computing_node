@@ -3,12 +3,43 @@ shared_storage = ../shared_storage
 local_storage = ../local_storage
 inter_proc_storage = ../inter_proc_storage
 
+
+[execution_environment]
+# package name of execution environment
+package = test_execution_environment
+execution_environment_dir = ../execution_environment
+
+
 [worker]
 # ulimit, docker
 spawn_method = ulimit
 memory_limit = 250
-proc_num_limit = 4 # process limit per worker
-workers = 4 # number of workers
-start_port = 8091 # listening ports for workers 8091, 8092, 8093 ...
+# process limit per worker
+proc_num_limit = 4
+# number of workers
+workers = 4
+# listening ports for workers 8091, 8092, 8093 ...
+start_port = 8091
+
+[computing_node]
+# will be auto generated with first launch if empty
+uuid =
+# hostid linux command will be used if empty
+host_id =
+# type name of computing node EEP SPARK POSTPROCESSING
+type = test
+# sending resource info interval
+health_check_interval = 3
+
+[kafka_producer]
+bootstrap_servers = localhost
+acks = all
+
+[kafka_consumer]
+bootstrap_servers = localhost:9092
+group_id = complex_rest
+
+
+
 
 
