@@ -115,6 +115,7 @@ python_computing_node/computing_node.conf
 make_build
 secret_key
 deploy_state/
+run/
 nginx/
 supervisord*
 postgres_config/
@@ -131,5 +132,4 @@ docker-compose-local.yml
 
 # socket files
 *.socket
-
 

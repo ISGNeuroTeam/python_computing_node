@@ -8,49 +8,42 @@ from aiokafka import AIOKafkaProducer as Producer, AIOKafkaConsumer as Consumer
 
 class Server:
     def __init__(
-            self, computing_node_config, worker_pool, execution_environment_package,
-            command_executor_config, kafka_config,
+            self, kafka_config, server_config, computing_node_config, worker_pool, 
     ):
         """
-        :computing_node_config: computing node server configuration
+        :param kafka_config: config dictionary for kafka
+        :param server_config: config dictionary (socket type and port) for communicating with workers
+        :param computing_node_config: computing node server configuration
         :param worker_pool: worker pool object for making job
-        :execution_environment_package: package containing CommandExecutor class
-        :command_executor_config: config dictionary for comand executor
-        :kafka_config: config dictionary for kafka
         """
         self._worker_pool = worker_pool
         self._kafka_config = kafka_config
+        self._server_config = server_config
         self._computing_node_config = computing_node_config
-        self._config = computing_node_config
 
-        self._command_execuor_config = command_executor_config
         self.consuming_task = None
 
-        self._commands_syntax = self._get_commands_syntax(execution_environment_package)
+        self._commands_syntax = self._get_commands_syntax()
 
-        self._job_topic = f"{self._config['uuid']}_job"
+        self._job_topic = f"{self._computing_node_config['uuid']}_job"
         self._producer = Producer(
             bootstrap_servers=kafka_config['producer']['bootstrap_servers']
         )
 
         asyncio.create_task(self._send_resources_task())
 
-    def _get_commands_syntax(self, execution_environment_package):
+    def _get_commands_syntax(self):
         """
         Load command executor from execution environment and returns commands syntax dictionary
         """
-        # import command executor class from execution_environment and initialize it
-        import sys
-        print(sys.path)
-        command_executor_module = importlib.import_module(execution_environment_package)
-        command_executor_class = command_executor_module.CommandExecutor
-        command_executor = command_executor_class(*self._command_execuor_config)
-        return command_executor.get_commands_syntax()
+        # todo send request to first worker to get commands syntax
+        return "syntax"
+
 
     async def _register(self):
         register_command = {
-            'computing_node_type': self._config['type'],
-            'host_id': self._config['host_id'],
+            'computing_node_type': self._computing_node_config['type'],
+            'host_id': self._computing_node_config['host_id'],
             'otl_command_syntax': self._commands_syntax,
             'resources': {
                 'workers': self._worker_pool.get_workers_count()
@@ -58,7 +51,7 @@ class Server:
         }
 
         control_command = {
-            'computing_node_uuid': self._config['uuid'],
+            'computing_node_uuid': self._computing_node_config['uuid'],
             'command_name': 'REGISTER_COMPUTING_NODE',
             'command': register_command,
         }
@@ -67,7 +60,7 @@ class Server:
     async def _unregister(self):
         unregister_command = {}
         control_command = {
-            'computing_node_uuid': self._config['uuid'],
+            'computing_node_uuid': self._computing_node_config['uuid'],
             'command_name': 'UNREGISTER_COMPUTING_NODE',
             'command': unregister_command,
         }
@@ -140,7 +133,7 @@ class Server:
         }
 
         control_command = {
-            'computing_node_uuid': self._config['uuid'],
+            'computing_node_uuid': self._computing_node_config['uuid'],
             'command_name': 'RESOURCE_STATUS',
             'command': resource_command,
         }

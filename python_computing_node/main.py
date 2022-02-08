@@ -12,24 +12,34 @@ log = logging.getLogger(__name__)
 async def main():
 
     # read config
-
     workers_count = int(ini_config['worker']['workers'])
     start_port = int(ini_config['worker']['start_port'])
-    memory_limit = int(ini_config['worker']['memory_limit'])
+    memory_limit = int(ini_config['worker']['memory_limit']) * 1024 * 1024
     proc_num_limit = int(ini_config['worker']['proc_num_limit'])
     spawn_method = ini_config['worker']['spawn_method']
+    socket_type = ini_config['worker']['socket_type']
 
-    inter_proc_storage = ini_config['mounts']['inter_proc_storage']
-    shared_storage = ini_config['mounts']['shared_storage']
-    local_storage = ini_config['mounts']['local_storage']
+    server_config = ini_config['server']
+    server_port = int(ini_config['server']['port'])
+    server_socket_type = ini_config['server']['socket_type']
+
+    execution_environment = ini_config['execution_environment']['package']
+    commands_dir = ini_config['execution_environment']['commands_dir']
+
+    storages = ini_config['storages']
 
     # add execution environment directory to sys
-
     execution_environment_dir = ini_config['execution_environment']['execution_environment_dir']
     sys.path.append(execution_environment_dir)
 
     worker_base_process = WorkerProcess(
-        spawn_method, start_port, proc_num_limit, memory_limit, inter_proc_storage, shared_storage, local_storage
+        spawn_method,
+        proc_num_limit, memory_limit,
+        execution_environment_dir, execution_environment,
+        commands_dir,
+        storages,
+        socket_type, start_port,
+        server_socket_type, server_port
     )
 
     worker_pool = WorkerPool(
@@ -37,13 +47,12 @@ async def main():
     )
 
     server = Server(
-        ini_config['computing_node'], worker_pool,
-        ini_config['execution_environment']['package'],
-        ini_config['mounts'],
         {
             'producer': ini_config['kafka_producer'],
             'consumer': ini_config['kafka_consumer'],
-        }
+        },
+        server_config,
+        ini_config['computing_node'], worker_pool,
     )
 
     # to ensure that try / finally block will be executed and __exit__ methods of contex manager
@@ -58,11 +67,6 @@ async def main():
     signal.signal(signal.SIGTERM, terminate_handler)
 
     await server.run()
-
-
-
-
-
 
 
 if __name__ == "__main__":

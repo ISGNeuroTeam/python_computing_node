@@ -6,14 +6,13 @@ from pathlib import Path
 
 
 defaults = {
-    'mounts': {
-        'shared_storage': '../shared_storage',
-        'local_storage': '../local_storage',
-        'inter_proc_storage': '../inter_proc_storage',
+    'storages': {
+        'interproc_storage': '../inter_proc_storage',
     },
     'execution_environment': {
         'package': 'test_execution_environment',
-        'execution_environment_dir': '../execution_environment'
+        'execution_environment_dir': '../execution_environment',
+        'commands_dir': '../execution_environment/test_execution_environment/commands'
     },
     'worker': {
         'spawn_method': 'ulimit',
@@ -30,6 +29,12 @@ defaults = {
     'kafka_producer': {
         'bootstrap_servers': 'localhost',
         'acks': 'all',
+    },
+
+    'server': {
+        'port': 8090,
+        'socket_type': 'unix',
+        'run_dir': '../run'
     },
 
     'kafka_consumer': {
@@ -72,21 +77,31 @@ def make_abs_paths(config_dict, dict_keys_list, base_dir):
     Replace relative paths in config to absolute paths and create directories if they doesn't exist
     :param config_dict: dict config
     :param dict_keys_list: list of keys in dictionary where relative path located
+    Example if dict keys list is ['key1', 'key2' ] then config_dict['key1']['key2'] will become absolute path
+    if only one key in list then absolute path will be generated for all kets in config_dict['key1'] dictionary
     :param base_dir: base directory to calculate relative paths
     :return:
     """
-    for section, option in dict_keys_list:
-        # replace relative paths to absolute
-        p = Path(config_dict[section][option])
-        if not p.is_absolute():
-            dir_path = (base_dir / p).resolve()
-        else:
-            dir_path = p
-        # create directory
-        if not dir_path.exists():
-            dir_path.mkdir(exist_ok=True)
+    for dict_keys in dict_keys_list:
+        section = dict_keys[0]
 
-        config_dict[section][option] = str(dir_path)
+        if len(dict_keys) == 1:
+            options = config_dict[section].keys()
+        else:
+            options = [dict_keys[1], ]
+
+        for option in options:
+            # replace relative paths to absolute
+            p = Path(config_dict[section][option])
+            if not p.is_absolute():
+                dir_path = (base_dir / p).resolve()
+            else:
+                dir_path = p
+            # create directory
+            if not dir_path.exists():
+                dir_path.mkdir(exist_ok=True)
+
+            config_dict[section][option] = str(dir_path)
 
 
 def auto_generate_uuids_for_first_launch(config_path, dict_keys_list):
@@ -97,15 +112,11 @@ def auto_generate_uuids_for_first_launch(config_path, dict_keys_list):
     config = configparser.RawConfigParser()
 
     config.read(config_path)
-    for section in config:
-        print(section)
+
     for section, option in dict_keys_list:
         if section not in config:
             config.add_section(section)
-        print('!!')
-        print(config[section][option])
         if not (option in config[section] and config[section][option]):
-            print('generate')
             config[section][option] = uuid.uuid4().hex
 
     with open(config_path, 'w') as f:
@@ -148,10 +159,10 @@ def get_ini_config():
     make_abs_paths(
         merged_with_defaults,
         [
-            ['mounts', 'shared_storage'],
-            ['mounts', 'local_storage'],
-            ['mounts', 'inter_proc_storage'],
-            ['execution_environment', 'execution_environment_dir']
+            ['storages', ],
+            ['execution_environment', 'execution_environment_dir'],
+            ['execution_environment', 'commands_dir'],
+            ['server', 'run_dir']
         ],
         node_source_dir
     )

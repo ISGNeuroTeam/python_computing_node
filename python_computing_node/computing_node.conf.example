@@ -1,25 +1,31 @@
-[mounts]
+[storages]
 shared_storage = ../shared_storage
 local_storage = ../local_storage
-inter_proc_storage = ../inter_proc_storage
+interproc_storage = ../inter_proc_storage
 
 
 [execution_environment]
 # package name of execution environment
 package = test_execution_environment
 execution_environment_dir = ../execution_environment
+commands_dir = ../execution_environment/test_execution_environment/commands
 
 
 [worker]
 # ulimit, docker
 spawn_method = ulimit
+
+#memoty limit in megabytes
 memory_limit = 250
-# process limit per worker
+
+# process limit per worker (only for docker)
 proc_num_limit = 4
 # number of workers
 workers = 4
-# listening ports for workers 8091, 8092, 8093 ...
-start_port = 8091
+# listening ports for workers 8091, 8092, 8093 ... or index for socket file
+start_port = 9091
+# socket type for worker. unix or inet
+socket_type = unix
 
 [computing_node]
 # will be auto generated with first launch if empty
@@ -30,6 +36,12 @@ host_id =
 type = test
 # sending resource info interval
 health_check_interval = 3
+
+[server]
+port = 8090
+socket_type = unix
+run_dir = ../run
+
 
 [kafka_producer]
 bootstrap_servers = localhost
