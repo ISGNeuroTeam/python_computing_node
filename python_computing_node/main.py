@@ -2,8 +2,8 @@ import logging
 import sys
 import signal
 import asyncio
-from config import ini_config
 
+from config import ini_config
 from server import Server, WorkerProcess, WorkerPool
 
 log = logging.getLogger(__name__)
@@ -22,6 +22,7 @@ async def main():
     server_config = ini_config['server']
     server_port = int(ini_config['server']['port'])
     server_socket_type = ini_config['server']['socket_type']
+    run_dir = ini_config['server']['run_dir']
 
     execution_environment = ini_config['execution_environment']['package']
     commands_dir = ini_config['execution_environment']['commands_dir']
@@ -39,7 +40,7 @@ async def main():
         commands_dir,
         storages,
         socket_type, start_port,
-        server_socket_type, server_port
+        server_socket_type, server_port, run_dir
     )
 
     worker_pool = WorkerPool(
@@ -58,13 +59,12 @@ async def main():
     # to ensure that try / finally block will be executed and __exit__ methods of contex manager
     def terminate_handler(signum, frame):
         log.info('server shutdown')
-
-        # TODO change to server.terminate()
         worker_pool.terminate()
-
+        asyncio.wait_for(server.stop())
         sys.exit(0)
 
     signal.signal(signal.SIGTERM, terminate_handler)
+    signal.signal(signal.SIGINT, terminate_handler)
 
     await server.run()
 

@@ -8,12 +8,18 @@ class WorkerPool:
     def __init__(self, worker_base_process, workers_count, start_port):
 
         self._current_port = start_port - 1  # get_port function do increment
-
         self._workers_count = workers_count
+        self._worker_base_process = worker_base_process
+
         # the list of workers
         self._worker_processes = self._create_workers(
             worker_base_process, workers_count
         )
+
+        self._free_workers_indexes = set([i for i in range(workers_count)])
+
+        # dictionary with node job uuid for every worker
+        self._current_worker_jobs = {i: None for i in range(workers_count)}
 
     def _create_workers(
             self, worker_base_process, workers_count
@@ -46,18 +52,29 @@ class WorkerPool:
         for worker_process in self._worker_processes:
             asyncio.create_task(self.run_worker_process_forever(worker_process))
 
-    async def make_job(self, node_job: bytes):
+    async def make_job(self, node_job: dict):
         """
         Chose a worker and send job to it
         awaits result and return it
         """
+        free_worker_index = self._free_workers_indexes.pop()
+        self._current_worker_jobs[free_worker_index] = node_job['uuid']
+
+        resp = await self._worker_processes[free_worker_index].send_job(node_job)
+
+        self._free_workers_indexes.add(free_worker_index)
+        self._current_worker_jobs[free_worker_index] = None
+
+        return resp['status'], resp['message']
+
+    async def _send_node_node_job_to_worker(self, node_job, worker_port):
         pass
 
     def get_free_workers_count(self):
         """
         Returns number of free workers
         """
-        pass
+        return len(self._free_workers_indexes)
 
     def get_workers_count(self):
         """
@@ -65,9 +82,9 @@ class WorkerPool:
         """
         return self._workers_count
 
-
     def terminate(self):
         """
         Terminate all workers gracefully
         """
-        pass
+        for worker_process in self._worker_processes:
+            worker_process.terminate()

@@ -23,7 +23,7 @@ proc_num_limit = 4
 # number of workers
 workers = 4
 # listening ports for workers 8091, 8092, 8093 ... or index for socket file
-start_port = 9091
+start_port = 50101
 # socket type for worker. unix or inet
 socket_type = unix
 
@@ -38,7 +38,7 @@ type = test
 health_check_interval = 3
 
 [server]
-port = 8090
+port = 50100
 socket_type = unix
 run_dir = ../run
 

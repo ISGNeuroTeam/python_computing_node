@@ -1,12 +1,12 @@
-import asyncio
 import json
 import sys
+import asyncio
+import aiohttp
 
 from pathlib import Path
 
 BASE_SOURCE_DIR = Path(__file__).resolve().parent.parent
 WORKER_DIR = BASE_SOURCE_DIR / 'worker'
-RUN_DIR = BASE_SOURCE_DIR.parent / 'run'
 
 
 class LaunchCommand:
@@ -15,7 +15,7 @@ class LaunchCommand:
             execution_environment_dir, execution_environment, commands_dir,
             storages,
             socket_type, port,
-            server_socket_type, server_port
+            server_socket_type, server_port, run_dir
     ):
         self.commands_dir = commands_dir
         self.socket_type = socket_type
@@ -28,6 +28,8 @@ class LaunchCommand:
 
         self.server_socket_type = server_socket_type
         self.server_port = server_port
+
+        self.run_dir = run_dir
 
         self._command = self.create_launch_command()
 
@@ -79,7 +81,7 @@ class UlimitLaunchCommand(LaunchCommand):
             f' {self.port}' \
             f' {self.server_socket_type}' \
             f' {self.server_port}' \
-            f' {str(RUN_DIR)}'
+            f' {self.run_dir}'
 
     def _get_python_executable(self):
         execution_environment_venv = Path(self.execution_environment_dir) / self.execution_environment / 'venv'
@@ -99,7 +101,7 @@ class DockerLaunchCommand(LaunchCommand):
             self._get_memory_limit_option(),
             self._get_port_option(),
             self._get_storages_mount_option(),
-            self._get_commands_dir_moutn_option(),
+            self._get_commands_dir_mount_option(),
             self._get_run_dir_mount_option(),
             self._get_worker_src_moutn_option(),
             self._get_execution_environment_mount_option(),
@@ -125,10 +127,7 @@ class DockerLaunchCommand(LaunchCommand):
         return f'-v {self.execution_environment_dir}:/worker/execution_environment'
 
     def _get_run_dir_mount_option(self):
-        return f'-v {str(RUN_DIR)}:/worker/run'
-
-    def _get_commands_dir_moutn_option(self):
-        return f'-v {self.commands_dir}:/worker/commands'
+        return f'-v {self.run_dir}:/worker/run'
 
     def _get_commands_dir_mount_option(self):
         return f'-v {self.commands_dir}:/worker/commands'
@@ -180,7 +179,7 @@ class WorkerProcess:
             commands_dir,
             storages,
             socket_type, port,
-            server_socket_type, server_port
+            server_socket_type, server_port, run_dir
     ):
         """
         :param spawn_method: ulimit, docker
@@ -193,6 +192,7 @@ class WorkerProcess:
         :param execution_environment: execution environment package located in execution_environment_dir
         :param server_socket_type: server socket type, 'unix' or 'inet' string
         :param server_port: server port
+        :param run_dir: directory with pids and socket files
         """
         self.spawn_method = spawn_method
         self.port = port
@@ -207,9 +207,14 @@ class WorkerProcess:
         self.server_socket_type = server_socket_type
         self.server_port = server_port
 
+        self.run_dir = run_dir
+
         self.proc = None
 
         self.command = self.create_launch_command()
+
+        # session and server address to make requests
+        self.process_session, self.address = self._create_process_session()
 
     def create_launch_command(self):
 
@@ -225,9 +230,20 @@ class WorkerProcess:
         launch_command = launch_command_cls(
             self.proc_num_limit, self.memory_limit,
             self.execution_environment_dir, self.execution_environment, self.commands_dir,
-            self.storages, self.socket_type, self.port, self.server_socket_type, self.server_port
+            self.storages, self.socket_type, self.port, self.server_socket_type, self.server_port, self.run_dir
         )
         return str(launch_command)
+
+    def _create_process_session(self):
+        if self.socket_type == 'unix':
+            socket_path  = Path(self.run_dir) / f'worker{self.port}.socket'
+            conn = aiohttp.UnixConnector(path=str(socket_path))
+            session = aiohttp.ClientSession(connector=conn)
+            address = 'http://localhost/'
+        else:
+            address = f'http://localhost:{self.port}/'
+            session = aiohttp.ClientSession()
+        return session, address
 
     async def spawn(self):
         """
@@ -241,10 +257,17 @@ class WorkerProcess:
         await self.proc.wait()
         return self.proc.returncode, self.proc.stderr
 
+    async def send_job(self, node_job):
+        async with self.process_session.post(self.address + 'job', data=json.dumps(node_job)) as resp:
+            resp = await resp.content.read()
+            resp = json.loads(resp)
+            return resp
+
     def change_port(self, new_port):
         self.port = new_port
         self.command = self.create_launch_command()
 
     def terminate(self):
+        asyncio.wait_for(self.process_session.close())
         if self.proc is not None and self.proc.returncode:
             self.proc.terminate()

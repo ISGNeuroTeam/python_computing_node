@@ -1,10 +1,9 @@
 import json
-import importlib
-
 import asyncio
 
 from aiokafka import AIOKafkaProducer as Producer, AIOKafkaConsumer as Consumer
 
+from .worker_listnener import WorkerListener
 
 class Server:
     def __init__(
@@ -18,10 +17,18 @@ class Server:
         """
         self._worker_pool = worker_pool
         self._kafka_config = kafka_config
-        self._server_config = server_config
+        self._worker_listener = WorkerListener(
+            server_config['socket_type'],
+            server_config['port'],
+            server_config['run_dir'],
+            self._job_status_handler
+        )
         self._computing_node_config = computing_node_config
 
-        self.consuming_task = None
+        # tasks will be defined in start method
+        self._consuming_task = None
+        self._worker_listener_task = None
+        self._worker_processes_task = None
 
         self._commands_syntax = self._get_commands_syntax()
 
@@ -38,7 +45,6 @@ class Server:
         """
         # todo send request to first worker to get commands syntax
         return "syntax"
-
 
     async def _register(self):
         register_command = {
@@ -144,19 +150,28 @@ class Server:
             await self._send_resources()
             await asyncio.sleep(int(self._computing_node_config['health_check_interval']))
 
+    async def _job_status_handler(self, uuid, status, message):
+        """
+        Callback for worker job status message
+        """
+        await self._send_node_job_status(uuid, status, message)
+
     async def start(self):
         await self._producer.start()
         await self._register()
-        self.consuming_task = asyncio.create_task(self._start_job_consuming())
-        await self.consuming_task
+        self._consuming_task = asyncio.create_task(self._start_job_consuming())
+        self._worker_listener_task = asyncio.create_task(self._worker_listener.start())
+        self._worker_processes_task = asyncio.create_task(self._worker_pool.run_worker_processes_forever())
+        await asyncio.gather(self._consuming_task, self._worker_processes_task, self._worker_listener_task)
 
     async def stop(self):
         await self._unregister()
         await self._producer.stop()
+        await self._worker_listener.stop()
 
     async def run(self):
-        asyncio.create_task(self._worker_pool.run_worker_processes_forever())
         await self.start()
+
 
 
 

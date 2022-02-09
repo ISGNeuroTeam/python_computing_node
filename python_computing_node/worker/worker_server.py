@@ -48,7 +48,7 @@ class WorkerServer:
             socket_path = Path(run_dir) / f'worker{str(port)}.socket'
             config["bind"] = "unix:" + str(socket_path)
         else:
-            config['bind'] = f'localhost:{port}'
+            config['bind'] = f'0.0.0.0:{port}'
 
         config['timeout'] = 0
         config['loglevel'] = 'info'
