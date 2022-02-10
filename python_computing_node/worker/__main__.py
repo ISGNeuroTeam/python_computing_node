@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .worker_server import WorkerServer
 from .server_client import ServerClient
-from .progress_logger import ProgressLog
+from .progress_notify import ProgressNotifier
 
 
 def main():
@@ -51,7 +51,7 @@ def main():
     server_client = ServerClient(server_socket_type, args.server_port, run_dir)
 
     # todo make real progress logger
-    progress_logger = ProgressLog(server_client)
+    progress_notifier = ProgressNotifier(server_client)
 
     # import command executor
     command_executor_module = importlib.import_module(
@@ -59,11 +59,11 @@ def main():
     )
 
     command_executor_class = command_executor_module.CommandExecutor
-    command_executor = command_executor_class(storages, args.commands_dir, progress_logger)
+    command_executor = command_executor_class(storages, args.commands_dir, progress_notifier.message)
 
     # initialize worker server
     worker_server = WorkerServer(
-        socket_type, args.port, command_executor, server_client, run_dir
+        socket_type, args.port, command_executor, progress_notifier, run_dir
     )
 
     worker_server.run()

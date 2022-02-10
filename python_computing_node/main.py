@@ -9,7 +9,7 @@ from server import Server, WorkerProcess, WorkerPool
 log = logging.getLogger(__name__)
 
 
-async def main():
+async def main_coroutine():
 
     # read config
     workers_count = int(ini_config['worker']['workers'])
@@ -33,42 +33,49 @@ async def main():
     execution_environment_dir = ini_config['execution_environment']['execution_environment_dir']
     sys.path.append(execution_environment_dir)
 
-    worker_base_process = WorkerProcess(
-        spawn_method,
-        proc_num_limit, memory_limit,
-        execution_environment_dir, execution_environment,
-        commands_dir,
-        storages,
-        socket_type, start_port,
-        server_socket_type, server_port, run_dir
-    )
+    worker_pool = None
+    server = None
 
-    worker_pool = WorkerPool(
-        worker_base_process, workers_count, start_port
-    )
+    try:
+        worker_base_process = WorkerProcess(
+            spawn_method,
+            proc_num_limit, memory_limit,
+            execution_environment_dir, execution_environment,
+            commands_dir,
+            storages,
+            socket_type, start_port,
+            server_socket_type, server_port, run_dir
+        )
 
-    server = Server(
-        {
-            'producer': ini_config['kafka_producer'],
-            'consumer': ini_config['kafka_consumer'],
-        },
-        server_config,
-        ini_config['computing_node'], worker_pool,
-    )
+        worker_pool = WorkerPool(
+            worker_base_process, workers_count, start_port
+        )
 
-    # to ensure that try / finally block will be executed and __exit__ methods of contex manager
-    def terminate_handler(signum, frame):
-        log.info('server shutdown')
-        worker_pool.terminate()
-        asyncio.wait_for(server.stop())
-        sys.exit(0)
+        server = Server(
+            {
+                'producer': ini_config['kafka_producer'],
+                'consumer': ini_config['kafka_consumer'],
+            },
+            server_config,
+            ini_config['computing_node'], worker_pool,
+        )
 
-    signal.signal(signal.SIGTERM, terminate_handler)
-    signal.signal(signal.SIGINT, terminate_handler)
+        await server.run()
 
-    await server.run()
+    except asyncio.CancelledError:
+        if worker_pool is not None:
+            await worker_pool.terminate()
+        if server is not None:
+            await server.stop()
 
+
+async def main():
+    main_task = asyncio.create_task(main_coroutine())
+    loop = asyncio.get_running_loop()
+    loop.add_signal_handler(signal.SIGINT, main_task.cancel)
+    loop.add_signal_handler(signal.SIGTERM, main_task.cancel)
+    await main_task
 
 if __name__ == "__main__":
-    log.info('Post processing server started')
+    log.info('Computing node server started')
     asyncio.run(main())

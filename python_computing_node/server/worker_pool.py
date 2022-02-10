@@ -82,9 +82,9 @@ class WorkerPool:
         """
         return self._workers_count
 
-    def terminate(self):
+    async def terminate(self):
         """
         Terminate all workers gracefully
         """
         for worker_process in self._worker_processes:
-            worker_process.terminate()
+            await worker_process.terminate()

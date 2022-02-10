@@ -14,11 +14,12 @@ class WorkerServer:
             socket_type: socket.AddressFamily,
             port: int,
             command_executor,
-            server_client,
+            progress_notifier,
             run_dir
     ):
         self.port = port
         self.command_executor = command_executor
+        self.progress_notifier = progress_notifier
 
         self.app = Bottle()
         self.app.route('/job', method='POST', callback=self.run_job)

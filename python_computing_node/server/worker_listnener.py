@@ -53,4 +53,5 @@ class WorkerListener:
         await site.start()
 
     async def stop(self):
-        await self.app_runner.cleanup()
+        if self.app_runner is not None:
+            await self.app_runner.cleanup()

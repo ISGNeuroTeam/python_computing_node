@@ -209,12 +209,15 @@ class WorkerProcess:
 
         self.run_dir = run_dir
 
+        # subprocess object
         self.proc = None
 
+        # command string
         self.command = self.create_launch_command()
 
-        # session and server address to make requests
-        self.process_session, self.address = self._create_process_session()
+        # session and server address to make requests will be created in spawn
+        self.process_session = None
+        self.address = None
 
     def create_launch_command(self):
 
@@ -236,7 +239,7 @@ class WorkerProcess:
 
     def _create_process_session(self):
         if self.socket_type == 'unix':
-            socket_path  = Path(self.run_dir) / f'worker{self.port}.socket'
+            socket_path = Path(self.run_dir) / f'worker{self.port}.socket'
             conn = aiohttp.UnixConnector(path=str(socket_path))
             session = aiohttp.ClientSession(connector=conn)
             address = 'http://localhost/'
@@ -254,6 +257,10 @@ class WorkerProcess:
         self.proc = await asyncio.create_subprocess_shell(
             self.command, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE
         )
+        # wait for worker server started
+        await asyncio.sleep(2)
+        self.process_session, self.address = self._create_process_session()
+
         await self.proc.wait()
         return self.proc.returncode, self.proc.stderr
 
@@ -267,7 +274,7 @@ class WorkerProcess:
         self.port = new_port
         self.command = self.create_launch_command()
 
-    def terminate(self):
-        asyncio.wait_for(self.process_session.close())
+    async def terminate(self):
+        await self.process_session.close()
         if self.proc is not None and self.proc.returncode:
             self.proc.terminate()
