@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  kafka:
+    build: ./docs/docker_dev/kafka
+    ports:
+      - "9092:9092"
+
+  python_computing_node:
+    build:
+      context: ./
+      dockerfile: ./docs/docker_dev/python_computing_node/Dockerfile
+
+    volumes:
+      - ./:/python_computing_node
+      - ./python_computing_node/execution_environment:/execution_environment
+      - ./run:/run
+
+    user: ${CURRENT_UID}
+    depends_on:
+      - kafka

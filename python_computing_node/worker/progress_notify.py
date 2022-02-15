@@ -1,4 +1,4 @@
-from server_client import ServerClient
+from .server_client import ServerClient
 
 
 class ProgressNotifier:
