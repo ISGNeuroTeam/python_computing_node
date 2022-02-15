@@ -5,6 +5,9 @@ from aiokafka import AIOKafkaProducer as Producer, AIOKafkaConsumer as Consumer
 
 from .worker_listnener import WorkerListener
 
+COMPUTING_NODE_CONTROL_TOPIC = 'computing_node_control'
+
+
 class Server:
     def __init__(
             self, kafka_config, server_config, computing_node_config, worker_pool, 
@@ -37,8 +40,6 @@ class Server:
             bootstrap_servers=kafka_config['producer']['bootstrap_servers']
         )
 
-        asyncio.create_task(self._send_resources_task())
-
     def _get_commands_syntax(self):
         """
         Load command executor from execution environment and returns commands syntax dictionary
@@ -61,7 +62,8 @@ class Server:
             'command_name': 'REGISTER_COMPUTING_NODE',
             'command': register_command,
         }
-        await self._producer.send('computing_node_control', json.dumps(control_command).encode())
+        print('send register message')
+        await self._producer.send(COMPUTING_NODE_CONTROL_TOPIC, json.dumps(control_command).encode())
 
     async def _unregister(self):
         unregister_command = {}
@@ -70,7 +72,7 @@ class Server:
             'command_name': 'UNREGISTER_COMPUTING_NODE',
             'command': unregister_command,
         }
-        await self._producer.send('computing_node_control', json.dumps(control_command).encode())
+        await self._producer.send(COMPUTING_NODE_CONTROL_TOPIC, json.dumps(control_command).encode())
 
     async def _start_job_consuming(self):
         job_consumer = Consumer(
@@ -143,12 +145,12 @@ class Server:
             'command_name': 'RESOURCE_STATUS',
             'command': resource_command,
         }
-        await self._producer.send('computing_node_control', json.dumps(control_command).encode())
+        await self._producer.send(COMPUTING_NODE_CONTROL_TOPIC, json.dumps(control_command).encode())
 
     async def _send_resources_task(self):
         while True:
-            await self._send_resources()
             await asyncio.sleep(int(self._computing_node_config['health_check_interval']))
+            await self._send_resources()
 
     async def _job_status_handler(self, uuid, status, message):
         """
@@ -159,6 +161,7 @@ class Server:
     async def start(self):
         await self._producer.start()
         await self._register()
+        asyncio.create_task(self._send_resources_task())
         self._consuming_task = asyncio.create_task(self._start_job_consuming())
         # just waiting for kafka topic auto creation
         await asyncio.sleep(5)
