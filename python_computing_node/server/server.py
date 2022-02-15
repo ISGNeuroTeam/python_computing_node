@@ -33,25 +33,24 @@ class Server:
         self._worker_listener_task = None
         self._worker_processes_task = None
 
-        self._commands_syntax = self._get_commands_syntax()
-
         self._job_topic = f"{self._computing_node_config['uuid']}_job"
         self._producer = Producer(
             bootstrap_servers=kafka_config['producer']['bootstrap_servers']
         )
 
-    def _get_commands_syntax(self):
+    async def _get_commands_syntax(self):
         """
-        Load command executor from execution environment and returns commands syntax dictionary
+        Request commands syntax from worker pool
         """
-        # todo send request to first worker to get commands syntax
-        return "syntax"
+        return await self._worker_pool.get_commands_syntax()
 
     async def _register(self):
+        commands_syntax = await self._get_commands_syntax()
+
         register_command = {
             'computing_node_type': self._computing_node_config['type'],
             'host_id': self._computing_node_config['host_id'],
-            'otl_command_syntax': self._commands_syntax,
+            'otl_command_syntax': commands_syntax,
             'resources': {
                 'workers': self._worker_pool.get_workers_count()
             }
@@ -160,13 +159,26 @@ class Server:
 
     async def start(self):
         await self._producer.start()
-        await self._register()
-        asyncio.create_task(self._send_resources_task())
-        self._consuming_task = asyncio.create_task(self._start_job_consuming())
-        # just waiting for kafka topic auto creation
-        await asyncio.sleep(5)
-        self._worker_listener_task = asyncio.create_task(self._worker_listener.start())
+
+        # launch workers
         self._worker_processes_task = asyncio.create_task(self._worker_pool.run_worker_processes_forever())
+        # wait for workers
+        await asyncio.sleep(3)
+
+        # send register message to message queue
+        await self._register()
+
+        # periodically send resources to dispatcher
+        asyncio.create_task(self._send_resources_task())
+
+        # main task for job consuming
+        self._consuming_task = asyncio.create_task(self._start_job_consuming())
+        # waiting for kafka topic auto creation
+        await asyncio.sleep(3)
+
+        # start listener for job status
+        self._worker_listener_task = asyncio.create_task(self._worker_listener.start())
+
         await asyncio.gather(self._consuming_task, self._worker_processes_task, self._worker_listener_task)
 
     async def stop(self):

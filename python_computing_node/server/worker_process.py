@@ -237,6 +237,13 @@ class WorkerProcess:
         )
         return str(launch_command)
 
+    async def get_commands_syntax(self):
+        assert self.process_session is not None
+        async with self.process_session.get(self.address + 'syntax') as resp:
+            resp = await resp.content.read()
+            syntax = json.loads(resp)
+        return syntax
+
     def _create_process_session(self):
         if self.socket_type == 'unix':
             socket_path = Path(self.run_dir) / f'worker{self.port}.socket'

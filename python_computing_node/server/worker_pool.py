@@ -67,6 +67,9 @@ class WorkerPool:
 
         return resp['status'], resp['message']
 
+    async def get_commands_syntax(self):
+        return await self._worker_processes[0].get_commands_syntax()
+
     async def _send_node_node_job_to_worker(self, node_job, worker_port):
         pass
 

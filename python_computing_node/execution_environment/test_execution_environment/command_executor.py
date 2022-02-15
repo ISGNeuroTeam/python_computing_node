@@ -4,7 +4,7 @@ class CommandExecutor:
         pass
 
     def get_commands_syntax(self):
-        return {}
+        return {'test_syntax': 'syntax'}
 
     def execute_commands(self, dict_commands):
         return []
