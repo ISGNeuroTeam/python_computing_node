@@ -61,7 +61,6 @@ class Server:
             'command_name': 'REGISTER_COMPUTING_NODE',
             'command': register_command,
         }
-        print('send register message')
         await self._producer.send(COMPUTING_NODE_CONTROL_TOPIC, json.dumps(control_command).encode())
 
     async def _unregister(self):
@@ -83,7 +82,6 @@ class Server:
         await job_consumer.start()
         try:
             async for job_message in job_consumer:
-                print(job_message.value)
                 asyncio.create_task(self._run_job(job_message.value))
         finally:
             await job_consumer.stop()

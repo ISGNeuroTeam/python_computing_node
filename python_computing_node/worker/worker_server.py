@@ -29,14 +29,23 @@ class WorkerServer:
         self.gun_app = self.create_gunicorn_app(self.app, port, socket_type, run_dir)
 
     def run_job(self):
-        node_job: Dict = request.json
-        self.command_executor.execute(node_job['commands'])
-        response.status = 200
-        response.content_type = 'application/json'
+        node_job: Dict = json.load(request.body)
+        try:
+            self.progress_notifier.set_cur_job_uuid(node_job['uuid'])
+            self.command_executor.execute(node_job['commands'])
+            response.status = 200
+            response.content_type = 'application/json'
 
-        return {
-            'status': 'FINISHED',
-        }
+            return {
+                'status': 'FINISHED',
+                'status_text': f'node job {node_job["uuid"]} finished'
+            }
+        except Exception as err:
+            return {
+                'status': 'ERROR',
+                'status_text': str(err)
+            }
+
 
     def get_syntax(self):
         response.status = 200

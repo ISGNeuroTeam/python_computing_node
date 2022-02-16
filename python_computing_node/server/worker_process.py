@@ -274,8 +274,14 @@ class WorkerProcess:
     async def send_job(self, node_job):
         async with self.process_session.post(self.address + 'job', data=json.dumps(node_job)) as resp:
             resp = await resp.content.read()
-            resp = json.loads(resp)
-            return resp
+            try:
+                resp = json.loads(resp)
+                return resp
+            except json.decoder.JSONDecodeError:
+                return {
+                    'status': 'ERROR',
+                    'status_text': 'Worker din\'t return success answer. Some error occured.'
+                }
 
     def change_port(self, new_port):
         self.port = new_port

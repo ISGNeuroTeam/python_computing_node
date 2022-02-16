@@ -8,6 +8,9 @@ class ProgressNotifier:
         #current job uuid
         self._job_uuid = None
 
+    def set_cur_job_uuid(self, uuid):
+        self._job_uuid = uuid
+
     def start_job(self, job_uuid: str):
         self._job_uuid = job_uuid
         # todo send message about job start
@@ -36,7 +39,7 @@ class ProgressNotifier:
             total_commands_in_pipeline, stage=None, total_stages=None, depth=0
 
     ):
-        command_message = '\t'*depth + f'{command_index_in_pipeline}/{total_commands_in_pipeline}.' \
+        command_message = '\t'*depth + f'{command_index_in_pipeline} out of {total_commands_in_pipeline} command.' \
                                       f' Command {command_name}.'
         if stage is None:
             stage_message = ''

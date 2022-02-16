@@ -65,7 +65,7 @@ class WorkerPool:
         self._free_workers_indexes.add(free_worker_index)
         self._current_worker_jobs[free_worker_index] = None
 
-        return resp['status'], resp['message']
+        return resp['status'], resp['status_text']
 
     async def get_commands_syntax(self):
         return await self._worker_processes[0].get_commands_syntax()
