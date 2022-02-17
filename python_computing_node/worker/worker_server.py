@@ -1,13 +1,18 @@
+import logging
 import socket
 import json
+import logging
+
+import traceback
 
 from typing import Dict
-from enum import Enum
 
 from pathlib import Path
 
 from gunicorn.app.base import Application
 from bottle import Bottle, request, response
+
+log = logging.getLogger('worker')
 
 
 class WorkerServer:
@@ -30,22 +35,25 @@ class WorkerServer:
 
     def run_job(self):
         node_job: Dict = json.load(request.body)
+        response.status = 200
+        response.content_type = 'application/json'
+
         try:
             self.progress_notifier.set_cur_job_uuid(node_job['uuid'])
             self.command_executor.execute(node_job['commands'])
-            response.status = 200
-            response.content_type = 'application/json'
 
             return {
                 'status': 'FINISHED',
                 'status_text': f'node job {node_job["uuid"]} finished'
             }
         except Exception as err:
+            tb = traceback.format_exc()
+            log.error(str(err))
+            log.error(str(tb))
             return {
                 'status': 'ERROR',
                 'status_text': str(err)
             }
-
 
     def get_syntax(self):
         response.status = 200

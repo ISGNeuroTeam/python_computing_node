@@ -8,13 +8,27 @@ from kafka import KafkaConsumer, KafkaProducer
 
 class TestComputingNode(unittest.TestCase):
 
-    def test_aregister(self):
-        consumer = KafkaConsumer(
+    def setUp(self) -> None:
+        self.computing_node_control_consumer = KafkaConsumer(
             'computing_node_control',
             auto_offset_reset='earliest',
             bootstrap_servers=ini_config['kafka_consumer']['bootstrap_servers'],
             group_id=ini_config['kafka_consumer']['group_id']
         )
+
+        self.node_job_status_consumer = KafkaConsumer(
+            'nodejob_status',
+            auto_offset_reset='earliest',
+            bootstrap_servers=ini_config['kafka_consumer']['bootstrap_servers'],
+            group_id=ini_config['kafka_consumer']['group_id']
+        )
+
+    def tearDown(self) -> None:
+        self.computing_node_control_consumer.close()
+        self.node_job_status_consumer.close()
+
+    def test_register(self):
+        consumer = self.computing_node_control_consumer
 
         msg = next(consumer)
         msg = json.loads(msg.value)
@@ -50,12 +64,7 @@ class TestComputingNode(unittest.TestCase):
         value = json.dumps(message).encode()
         producer.send(test_node_job_topic, value=value)
 
-        consumer = KafkaConsumer(
-            'nodejob_status',
-            auto_offset_reset='earliest',
-            bootstrap_servers=ini_config['kafka_consumer']['bootstrap_servers'],
-            group_id=ini_config['kafka_consumer']['group_id']
-        )
+        consumer = self.node_job_status_consumer
 
         # check that first 10 message is job status message with status RUNNING
         for _ in range(10):

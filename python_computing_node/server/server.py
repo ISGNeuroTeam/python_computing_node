@@ -158,6 +158,9 @@ class Server:
     async def start(self):
         await self._producer.start()
 
+        # start listener for job status
+        self._worker_listener_task = asyncio.create_task(self._worker_listener.start())
+
         # launch workers
         self._worker_processes_task = asyncio.create_task(self._worker_pool.run_worker_processes_forever())
         # wait for workers
@@ -171,11 +174,9 @@ class Server:
 
         # main task for job consuming
         self._consuming_task = asyncio.create_task(self._start_job_consuming())
+
         # waiting for kafka topic auto creation
         await asyncio.sleep(3)
-
-        # start listener for job status
-        self._worker_listener_task = asyncio.create_task(self._worker_listener.start())
 
         await asyncio.gather(self._consuming_task, self._worker_processes_task, self._worker_listener_task)
 

@@ -2,11 +2,15 @@ import json
 import sys
 import asyncio
 import aiohttp
+import logging
 
 from pathlib import Path
 
 BASE_SOURCE_DIR = Path(__file__).resolve().parent.parent
 WORKER_DIR = BASE_SOURCE_DIR / 'worker'
+
+
+log = logging.getLogger('server')
 
 
 class LaunchCommand:
@@ -15,7 +19,7 @@ class LaunchCommand:
             execution_environment_dir, execution_environment, commands_dir,
             storages,
             socket_type, port,
-            server_socket_type, server_port, run_dir
+            server_socket_type, server_port, run_dir, log_dir, log_level
     ):
         self.commands_dir = commands_dir
         self.socket_type = socket_type
@@ -30,6 +34,9 @@ class LaunchCommand:
         self.server_port = server_port
 
         self.run_dir = run_dir
+
+        self.log_dir = log_dir
+        self.log_level = log_level
 
         self._command = self.create_launch_command()
 
@@ -81,7 +88,9 @@ class UlimitLaunchCommand(LaunchCommand):
             f' {self.port}' \
             f' {self.server_socket_type}' \
             f' {self.server_port}' \
-            f' {self.run_dir}'
+            f' {self.run_dir}' \
+            f' {self.log_dir}' \
+            f' {self.log_level}'
 
     def _get_python_executable(self):
         execution_environment_venv = Path(self.execution_environment_dir) / self.execution_environment / 'venv'
@@ -103,6 +112,7 @@ class DockerLaunchCommand(LaunchCommand):
             self._get_storages_mount_option(),
             self._get_commands_dir_mount_option(),
             self._get_run_dir_mount_option(),
+            self._get_log_dir_mount_option(),
             self._get_worker_src_moutn_option(),
             self._get_execution_environment_mount_option(),
             self._get_image_name(),
@@ -128,6 +138,9 @@ class DockerLaunchCommand(LaunchCommand):
 
     def _get_run_dir_mount_option(self):
         return f'-v {self.run_dir}:/worker/run'
+
+    def _get_log_dir_mount_option(self):
+        return f'-v {self.log_dir}:/logs'
 
     def _get_commands_dir_mount_option(self):
         return f'-v {self.commands_dir}:/worker/commands'
@@ -157,7 +170,9 @@ class DockerLaunchCommand(LaunchCommand):
                f' {self.port}' \
                f' {self.server_socket_type}' \
                f' {self.server_port}' \
-               f' /worker/run'
+               f' /worker/run' \
+               f' /logs' \
+               f' {self.log_level}'
 
     def _get_python_executalbe(self):
         execution_environment_venv = Path(f'/worker/execution_environment/{self.execution_environment}/venv')
@@ -179,7 +194,7 @@ class WorkerProcess:
             commands_dir,
             storages,
             socket_type, port,
-            server_socket_type, server_port, run_dir
+            server_socket_type, server_port, run_dir, log_dir, log_level
     ):
         """
         :param spawn_method: ulimit, docker
@@ -193,6 +208,8 @@ class WorkerProcess:
         :param server_socket_type: server socket type, 'unix' or 'inet' string
         :param server_port: server port
         :param run_dir: directory with pids and socket files
+        :param log_dir: directory with worker logs
+        :param log_level: log level
         """
         self.spawn_method = spawn_method
         self.port = port
@@ -208,6 +225,8 @@ class WorkerProcess:
         self.server_port = server_port
 
         self.run_dir = run_dir
+        self.log_dir = log_dir
+        self.log_level = log_level
 
         # subprocess object
         self.proc = None
@@ -233,7 +252,8 @@ class WorkerProcess:
         launch_command = launch_command_cls(
             self.proc_num_limit, self.memory_limit,
             self.execution_environment_dir, self.execution_environment, self.commands_dir,
-            self.storages, self.socket_type, self.port, self.server_socket_type, self.server_port, self.run_dir
+            self.storages, self.socket_type, self.port, self.server_socket_type, self.server_port, self.run_dir,
+            self.log_dir, self.log_level
         )
         return str(launch_command)
 
@@ -260,6 +280,7 @@ class WorkerProcess:
         Launch worker process and await ending
         Returns code and stderr output
         """
+        log.info(f'Spawing worker: {self.command}')
         print(self.command)
         self.proc = await asyncio.create_subprocess_shell(
             self.command, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE

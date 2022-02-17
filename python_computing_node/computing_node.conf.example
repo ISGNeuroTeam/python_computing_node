@@ -51,6 +51,11 @@ acks = all
 bootstrap_servers = localhost:9092
 group_id = complex_rest
 
+[logging]
+log_dir = ../logs
+level = INFO
+rotation_size = 10
+keep_files = 10
 
 
 

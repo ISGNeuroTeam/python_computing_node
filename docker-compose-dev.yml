@@ -15,6 +15,7 @@ services:
       - ./:/python_computing_node
       - ./python_computing_node/execution_environment:/execution_environment
       - ./run:/run
+      - ./logs:/logs
 
     user: ${CURRENT_UID}
     depends_on:

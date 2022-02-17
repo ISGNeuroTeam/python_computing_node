@@ -40,6 +40,14 @@ defaults = {
     'kafka_consumer': {
         'bootstrap_servers': 'localhost:9092',
         'group_id': 'complex_rest',
+    },
+    'logging': {
+        'active': 'True',
+        'log_dir': '../logs',
+        'level': 'INFO',
+        'rotate': 'True',
+        'rotation_size': 10,
+        'keep_files': 10,
     }
 }
 
@@ -162,7 +170,8 @@ def get_ini_config():
             ['storages', ],
             ['execution_environment', 'execution_environment_dir'],
             ['execution_environment', 'commands_dir'],
-            ['server', 'run_dir']
+            ['server', 'run_dir'],
+            ['logging', 'log_dir']
         ],
         node_source_dir
     )
