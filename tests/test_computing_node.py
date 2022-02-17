@@ -23,11 +23,29 @@ class TestComputingNode(unittest.TestCase):
             group_id=ini_config['kafka_consumer']['group_id']
         )
 
+        self.producer = KafkaProducer(
+            bootstrap_servers=ini_config['kafka_consumer']['bootstrap_servers']
+        )
+
+    def _send_job(self, commands, job_uuid):
+        test_node_job_topic = '99999999999999999999999999999999_job'
+
+        message = {
+            "uuid": job_uuid,
+            "computing_node_type": "SPARK",
+            "status": "READY_TO_EXECUTE",
+            "commands": commands
+        }
+
+        value = json.dumps(message).encode()
+        self.producer.send(test_node_job_topic, value=value)
+
     def tearDown(self) -> None:
         self.computing_node_control_consumer.close()
         self.node_job_status_consumer.close()
+        self.producer.close()
 
-    def test_register(self):
+    def test1_register(self):
         consumer = self.computing_node_control_consumer
 
         msg = next(consumer)
@@ -46,23 +64,11 @@ class TestComputingNode(unittest.TestCase):
         msg = json.loads(msg.value)
         self.assertEqual(msg['command_name'], 'RESOURCE_STATUS')
 
-    def test_execution(self):
-        producer = KafkaProducer(
-            bootstrap_servers=ini_config['kafka_consumer']['bootstrap_servers']
-        )
-        test_node_job_topic = '99999999999999999999999999999999_job'
-
+    def test2_execution(self):
         # send node job with two normal command
         commands = [{"name": "normal_command", "arguments": {"stages": [{"value": 3, "key": "stages", "type": "integer", "named_as": "", "group_by": [], "arg_type": "arg"}], "stage_time": [{"value": 1, "key": "stage_time", "type": "integer", "named_as": "", "group_by": [], "arg_type": "arg"}]}}, {"name": "normal_command", "arguments": {"stages": [{"value": 2, "key": "stages", "type": "integer", "named_as": "", "group_by": [], "arg_type": "arg"}], "stage_time": [{"value": 1, "key": "stage_time", "type": "integer", "named_as": "", "group_by": [], "arg_type": "arg"}]}}]
-        message = {
-            "uuid": "a7dcc379f3594323b6cd11f3f235e082",
-            "computing_node_type": "SPARK",
-            "status": "READY_TO_EXECUTE",
-            "commands": commands
-        }
 
-        value = json.dumps(message).encode()
-        producer.send(test_node_job_topic, value=value)
+        self._send_job(commands, "00000000000000000000000000000001")
 
         consumer = self.node_job_status_consumer
 
@@ -78,6 +84,24 @@ class TestComputingNode(unittest.TestCase):
         msg_dict = json.loads(msg.value)
         print(msg_dict)
         self.assertEqual(msg_dict['status'], 'FINISHED')
+
+    def test3_error_command(self):
+        job_uuid = "000000000000000000000000000error"
+        commands = [{"name": "error_command", "arguments": {}}]
+        self._send_job(commands, job_uuid)
+
+        # first message with running status
+        msg = next(self.node_job_status_consumer)
+        msg_dict = json.loads(msg.value)
+        print(msg_dict)
+        self.assertEqual(msg_dict['status'], 'RUNNING')
+
+        # second message with fail
+        # first message with running status
+        msg = next(self.node_job_status_consumer)
+        msg_dict = json.loads(msg.value)
+        print(msg_dict)
+        self.assertEqual(msg_dict['status'], 'FAILED')
 
 
 if __name__ == '__main__':

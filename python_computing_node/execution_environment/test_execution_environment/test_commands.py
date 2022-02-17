@@ -88,6 +88,8 @@ def do_error_command(command_dict, command_progress_message):
 
             time.sleep(stage_time)
             command_progress_message(f'Stage  {i} completed', stage=1, total_stages=stages)
+    else:
+        raise Exception('Test exception')
 
 
 def do_subsearch_command(command_dict, command_progress_message, execute):

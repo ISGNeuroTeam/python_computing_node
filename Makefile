@@ -17,19 +17,23 @@ all:
 test: docker_test clean_docker_test
 
 run:
-	mkdir run
+	mkdir -p run
 
-docker_test: run
+logs:
+	mkdir -p logs
+
+docker_test: run logs
 	@echo "Testing..."
-	CURRENT_UID=$(id -u):$(id -g) docker-compose -f docker-compose-dev.yml up -d --build
+	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml up -d --build
 	sleep 15
-	CURRENT_UID=$(id -u):$(id -g) docker-compose -f docker-compose-dev.yml exec  python_computing_node  python -m unittest discover -s tests
+	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml exec  python_computing_node  python -m unittest discover -s tests
 
 clean_docker_test:
 	@echo "Clean tests"
 	docker-compose -f docker-compose-dev.yml stop
 	if [[ $$(docker ps -aq -f name=python_computing_node) ]]; then docker rm $$(docker ps -aq -f name=python_computing_node);  fi;
 	rm -rf ./run
+	rm -rf ./logs
 
 clean: clean_docker_test
 
