@@ -52,7 +52,7 @@ class ServerClient:
         if self._socket_type == socket.AF_UNIX:
             s.connect(str(Path(self._run_dir) / f'server{self._port}.socket'))
         elif self._socket_type == socket.AF_INET:
-            s.connect(('localhost', 'port'))
+            s.connect(('localhost', self._port))
         else:
             raise ValueError('Unsupported socket type')
         try:

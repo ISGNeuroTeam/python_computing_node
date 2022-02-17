@@ -78,7 +78,6 @@ def main():
 
     config_logging(args.log_dir, args.log_level, args.port)
 
-
     storages = json.loads(args.storages_json)
 
     socket_type = socket.AF_UNIX if args.socket_type == 'unix' else socket.AF_INET
