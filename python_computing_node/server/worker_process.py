@@ -5,6 +5,7 @@ import aiohttp
 import logging
 
 from pathlib import Path
+from .timings import WORKER_PROCESS_SPAWN_TIME
 
 BASE_SOURCE_DIR = Path(__file__).resolve().parent.parent
 WORKER_DIR = BASE_SOURCE_DIR / 'worker'
@@ -286,7 +287,7 @@ class WorkerProcess:
             self.command, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE
         )
         # wait for worker server started
-        await asyncio.sleep(2)
+        await asyncio.sleep(WORKER_PROCESS_SPAWN_TIME)
         self.process_session, self.address = self._create_process_session()
 
         await self.proc.wait()

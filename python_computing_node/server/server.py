@@ -4,6 +4,7 @@ import asyncio
 from aiokafka import AIOKafkaProducer as Producer, AIOKafkaConsumer as Consumer
 
 from .worker_listnener import WorkerListener
+from .timings import WORKER_POOL_SPAWN_TIME, KAFKA_WAIT_TIME
 
 COMPUTING_NODE_CONTROL_TOPIC = 'computing_node_control'
 
@@ -90,12 +91,17 @@ class Server:
         """
         Async task for running new node job
         """
+        if job['status'] == 'CANCELED':
+            await self._worker_pool.cancel_job(job)
+            return
+
         if self._worker_pool.get_free_workers_count() == 0:
             await self._send_node_job_status(
                 job['uuid'],
                 'DECLINED_BY_COMPUTING_NODE',
                 f"Node job was declined, all workers are busy",
             )
+            return
 
         await self._send_node_job_status(
             job['uuid'],
@@ -162,9 +168,10 @@ class Server:
         self._worker_listener_task = asyncio.create_task(self._worker_listener.start())
 
         # launch workers
-        self._worker_processes_task = asyncio.create_task(self._worker_pool.run_worker_processes_forever())
-        # wait for workers
-        await asyncio.sleep(3)
+        self._worker_pool.run_worker_processes_forever()
+
+        # wait for worker pool
+        await asyncio.sleep(WORKER_POOL_SPAWN_TIME)
 
         # send register message to message queue
         await self._register()
@@ -176,9 +183,9 @@ class Server:
         self._consuming_task = asyncio.create_task(self._start_job_consuming())
 
         # waiting for kafka topic auto creation
-        await asyncio.sleep(3)
+        await asyncio.sleep(KAFKA_WAIT_TIME)
 
-        await asyncio.gather(self._consuming_task, self._worker_processes_task, self._worker_listener_task)
+        await asyncio.gather(self._consuming_task, self._worker_listener_task)
 
     async def stop(self):
         await self._unregister()

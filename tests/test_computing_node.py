@@ -1,7 +1,9 @@
 import unittest
 import json
+import time
 
 from config import ini_config
+from server.timings import WORKER_PROCESS_RESTART_TIME
 
 from kafka import KafkaConsumer, KafkaProducer
 
@@ -35,6 +37,17 @@ class TestComputingNode(unittest.TestCase):
             "computing_node_type": "SPARK",
             "status": "READY_TO_EXECUTE",
             "commands": commands
+        }
+
+        value = json.dumps(message).encode()
+        self.producer.send(test_node_job_topic, value=value)
+
+    def _cancel_job(self, job_uuid):
+        test_node_job_topic = '99999999999999999999999999999999_job'
+
+        message = {
+            "uuid": job_uuid,
+            "status": "CANCELED",
         }
 
         value = json.dumps(message).encode()
@@ -102,6 +115,41 @@ class TestComputingNode(unittest.TestCase):
         msg_dict = json.loads(msg.value)
         print(msg_dict)
         self.assertEqual(msg_dict['status'], 'FAILED')
+
+    def test4_decline_status(self):
+        # very long command
+        commands = [{"name": "normal_command", "arguments": {"stages": [{"value": 1, "key": "stages", "type": "integer", "named_as": "", "group_by": [], "arg_type": "arg"}], "stage_time": [{"value": 100000, "key": "stage_time", "type": "integer", "named_as": "", "group_by": [], "arg_type": "arg"}]}}]
+
+        # make 4 jobs which takes all workers
+        self._send_job(commands, "00000000000000000000000000000011")
+        self._send_job(commands, "00000000000000000000000000000012")
+        self._send_job(commands, "00000000000000000000000000000013")
+        self._send_job(commands, "00000000000000000000000000000014")
+
+        # the last one is declined
+        self._send_job(commands, "00000000000000000000000000000015")
+
+        for i in range(9):
+            msg = next(self.node_job_status_consumer)
+            msg_dict = json.loads(msg.value)
+            print(msg_dict)
+            if msg_dict['uuid'] == "00000000000000000000000000000015":
+                self.assertEqual(msg_dict['status'], 'DECLINED_BY_COMPUTING_NODE')
+
+        self._cancel_job("00000000000000000000000000000011")
+
+        # waiting for cancel and restarting process
+        time.sleep(WORKER_PROCESS_RESTART_TIME)
+
+        # now must not be declined
+        self._send_job(commands, "00000000000000000000000000000016")
+
+        for i in range(2):
+            msg = next(self.node_job_status_consumer)
+            msg_dict = json.loads(msg.value)
+            print(msg_dict)
+            self.assertEqual(msg_dict['uuid'], "00000000000000000000000000000016")
+            self.assertEqual(msg_dict['status'], 'RUNNING')
 
 
 if __name__ == '__main__':

@@ -40,7 +40,10 @@ class WorkerServer:
 
         try:
             self.progress_notifier.set_cur_job_uuid(node_job['uuid'])
+
+            log.info(f'Get node job {node_job["uuid"]}')
             self.command_executor.execute(node_job['commands'])
+            log.info(f'Node job {node_job["uuid"]} finished')
 
             return {
                 'status': 'FINISHED',
