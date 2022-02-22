@@ -135,6 +135,9 @@ class WorkerPool:
         """
         return len(self._free_workers_indexes)
 
+    def get_used_workers_count(self):
+        return self._workers_count - len(self._free_workers_indexes)
+
     def get_workers_count(self):
         """
         Returns total workers count

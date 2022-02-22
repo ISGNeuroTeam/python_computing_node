@@ -137,7 +137,7 @@ class Server:
 
     async def _send_resources(self):
         cur_resource_usage = {
-            'workers': self._worker_pool.get_free_workers_count()
+            'workers': self._worker_pool.get_used_workers_count()
         }
         resource_command = {
             'resources': cur_resource_usage
