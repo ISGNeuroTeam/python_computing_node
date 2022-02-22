@@ -75,9 +75,9 @@ class UlimitLaunchCommand(LaunchCommand):
         return f''
 
     def _get_memory_limit_option(self):
-        # memory limit in bytes
-        memory_limit = self.memory_limit
-        return f'--data={memory_limit}'
+        if self.memory_limit == 0:
+            return ''
+        return f'--data={self.memory_limit}'
 
     def _get_python_launch_command(self):
         storage_json_string = '"' + json.dumps(self.storages).replace('"', r'\"') + '"'
@@ -124,9 +124,13 @@ class DockerLaunchCommand(LaunchCommand):
         return f'docker run --rm -u $(id -u):$(id -g)'
 
     def _get_memory_limit_option(self):
+        if self.memory_limit == 0:
+            return ''
         return f'-m {self.memory_limit}'
 
     def _get_proc_num_limit_option(self):
+        if self.proc_num_limit == 0:
+            return ''
         return f'--pids-limit {self.proc_num_limit}'
 
     def _get_storages_mount_option(self):
