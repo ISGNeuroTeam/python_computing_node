@@ -61,7 +61,7 @@ class WorkerServer:
     def get_syntax(self):
         response.status = 200
         response.content_type = 'application/json'
-        return json.dumps(self.command_executor.get_commands_syntax())
+        return json.dumps(self.command_executor.get_command_syntax())
 
     @staticmethod
     def create_gunicorn_app(app: Bottle, port: int, socket_type: socket.AddressFamily, run_dir):

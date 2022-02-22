@@ -11,7 +11,7 @@ class CommandExecutor:
         self.depth=0
 
     @staticmethod
-    def get_commands_syntax():
+    def get_command_syntax():
         return syntax
 
     def execute(self, dict_commands):

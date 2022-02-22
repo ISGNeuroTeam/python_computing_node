@@ -39,14 +39,14 @@ class Server:
             bootstrap_servers=kafka_config['producer']['bootstrap_servers']
         )
 
-    async def _get_commands_syntax(self):
+    async def _get_command_syntax(self):
         """
         Request commands syntax from worker pool
         """
-        return await self._worker_pool.get_commands_syntax()
+        return await self._worker_pool.get_command_syntax()
 
     async def _register(self):
-        commands_syntax = await self._get_commands_syntax()
+        commands_syntax = await self._get_command_syntax()
 
         register_command = {
             'computing_node_type': self._computing_node_config['type'],

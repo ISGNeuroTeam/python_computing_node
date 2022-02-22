@@ -123,8 +123,8 @@ class WorkerPool:
 
         self._release_worker(node_job['uuid'])
 
-    async def get_commands_syntax(self):
-        return await self._worker_processes[0].get_commands_syntax()
+    async def get_command_syntax(self):
+        return await self._worker_processes[0].get_command_syntax()
 
     async def _send_node_node_job_to_worker(self, node_job, worker_port):
         pass
