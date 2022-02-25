@@ -4,6 +4,7 @@ import asyncio
 import aiohttp
 import logging
 
+from aiohttp.client_exceptions import ClientError
 from pathlib import Path
 from .timings import WORKER_PROCESS_SPAWN_TIME
 
@@ -298,16 +299,24 @@ class WorkerProcess:
         return self.proc.returncode, self.proc.stderr
 
     async def send_job(self, node_job):
-        async with self.process_session.post(self.address + 'job', data=json.dumps(node_job)) as resp:
-            resp = await resp.content.read()
-            try:
-                resp = json.loads(resp)
-                return resp
-            except json.decoder.JSONDecodeError:
-                return {
-                    'status': 'ERROR',
-                    'status_text': 'Worker din\'t return success answer. Some error occured.'
-                }
+        try:
+            async with self.process_session.post(self.address + 'job', data=json.dumps(node_job)) as resp:
+                resp = await resp.content.read()
+                try:
+                    resp = json.loads(resp)
+                    return resp
+                except json.decoder.JSONDecodeError:
+                    log.error('Worker din\'t return success answer. Some error occurred. See worker log.')
+                    return {
+                        'status': 'FAILED',
+                        'status_text': 'Worker din\'t return success answer. Some error occurred. See worker log.'
+                    }
+        except ClientError as err:
+            log.error(f'Computing node server lost connection with worker. {str(err)}')
+            return {
+                'status': 'FAILED',
+                'status_text': f'Computing node server lost connection with worker. {str(err)}'
+            }
 
     def change_port(self, new_port):
         self.port = new_port

@@ -54,7 +54,7 @@ class WorkerServer:
             log.error(str(err))
             log.error(str(tb))
             return {
-                'status': 'ERROR',
+                'status': 'FAILED',
                 'status_text': str(err)
             }
 

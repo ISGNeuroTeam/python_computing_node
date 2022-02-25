@@ -141,6 +141,12 @@ class TestComputingNode(unittest.TestCase):
         # waiting for cancel and restarting process
         time.sleep(WORKER_PROCESS_RESTART_TIME)
 
+        msg = next(self.node_job_status_consumer)
+        msg_dict = json.loads(msg.value)
+        print(msg_dict)
+        self.assertEqual(msg_dict['uuid'], "00000000000000000000000000000011")
+        self.assertEqual(msg_dict['status'], 'CANCELED')
+
         # now must not be declined
         self._send_job(commands, "00000000000000000000000000000016")
 

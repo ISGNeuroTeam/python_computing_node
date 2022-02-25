@@ -109,21 +109,15 @@ class Server:
             f"job with uuid {job['uuid']} is being sent to worker pool",
         )
         status, message = await self._worker_pool.make_job(job)
-        if status == 'FINISHED':
-            # send status job done
-            await self._send_node_job_status(
-                job['uuid'],
-                'FINISHED',
-                f"Node job {job['uuid']} successfully finished. {message}",
 
-            )
-        else:
-            # send job fail
-            await self._send_node_job_status(
-                job['uuid'],
-                'FAILED',
-                f"Node job {job['uuid']} failed. {message}",
-            )
+        # report about resource is free
+        await self._send_resources()
+
+        await self._send_node_job_status(
+            job['uuid'],
+            status,
+            message,
+        )
 
     async def _send_node_job_status(
         self, node_job_uuid, status, status_text=None

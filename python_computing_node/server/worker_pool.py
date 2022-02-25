@@ -33,6 +33,9 @@ class WorkerPool:
         # dictionary to store worker index for node job
         self._node_job_worker_index = dict()
 
+        # set with canceled node job uuids
+        self.canceled_node_job_uuid = set()
+
     def _reserve_worker_for_job(self, job_uuid):
         """
         Returns free worker process instance for job and denotes it as bysy
@@ -99,6 +102,13 @@ class WorkerPool:
         resp = await worker_process.send_job(node_job)
         self._release_worker(node_job['uuid'])
 
+        # if node job was canceled ignore fail status
+
+        if resp['status'] == 'FAILED' and (node_job['uuid'] in self.canceled_node_job_uuid):
+            resp['status'] = 'CANCELED'
+            resp['status_text'] = 'Node job was canceled successfully'
+            self.canceled_node_job_uuid.discard(node_job['uuid'])
+
         return resp['status'], resp['status_text']
 
     async def cancel_job(self, node_job: dict):
@@ -106,6 +116,8 @@ class WorkerPool:
         Terminates worker process running node job
         """
         log.info(f'Cancel job {node_job["uuid"]}')
+        self.canceled_node_job_uuid.add(node_job["uuid"])
+
         worker_index = self._node_job_worker_index[node_job["uuid"]]
 
         # cancel task with worker
