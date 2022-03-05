@@ -1,6 +1,6 @@
 from functools import partial
 
-from .test_commands import syntax, do_error_command, do_normal_command, do_subsearch_command
+from .test_commands import syntax, do_error_command, do_normal_command, do_subsearch_command, do_sys_command
 
 
 class CommandExecutor:
@@ -31,7 +31,9 @@ class CommandExecutor:
                 self.depth += 1
                 do_subsearch_command(command, command_progress_message, self.execute)
                 self.depth -= 1
+            elif command['name'].startswith('sys_'):
+                do_sys_command(command, command_progress_message)
             else:
-                raise Exception('Unsupported command')
+                raise Exception(f'Unsupported command {command["name"] }')
 
         return {}

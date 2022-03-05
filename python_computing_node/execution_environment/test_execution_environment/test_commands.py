@@ -53,6 +53,11 @@ syntax = {
 }
 
 
+def do_sys_command(command_dict,  command_progress_message):
+    command_progress_message(f'Start system_command {command_dict["name"]} command')
+    command_progress_message(f'Finish system_command {command_dict["name"]} command')
+
+
 def do_normal_command(command_dict,  command_progress_message):
     command_progress_message('Start normal command')
     stages = int(command_dict['arguments']['stages'][0]['value'])
