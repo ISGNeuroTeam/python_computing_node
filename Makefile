@@ -12,7 +12,47 @@ all:
  dev - deploy for developing \n\
 "
 
+GENERATE_VERSION = $(shell cat setup.py | grep __version__ | head -n 1 | sed -re 's/[^"]+//' | sed -re 's/"//g' )
+GENERATE_BRANCH = $(shell git name-rev $$(git rev-parse HEAD) | cut -d\  -f2 | sed -re 's/^(remotes\/)?origin\///' | tr '/' '_')
+SET_VERSION = $(eval VERSION=$(GENERATE_VERSION))
+SET_BRANCH = $(eval BRANCH=$(GENERATE_BRANCH))
 
+pack: make_build
+	$(SET_VERSION)
+	$(SET_BRANCH)
+	echo Create archive \"python_computing_node-$(VERSION)-$(BRANCH).tar.gz\"
+	cd make_build; tar czf ../python_computing_node-$(VERSION)-$(BRANCH).tar.gz python_computing_node
+
+clean_pack:
+	rm -f python_computing_node-$(VERSION)-$(BRANCH).tar.gz
+
+make_build: venv.tar.gz
+	echo make_build
+	mkdir -p make_build/python_computing_node
+	cp -R ./python_computing_node make_build/python_computing_node
+	mkdir ./make_build/python_computing_node/logs
+	mkdir ./make_build/python_computing_node/run
+	mkdir ./make_build/python_computing_node/execution_environment
+	mv ./make_build/python_computing_node/python_computing_node/computing_node.conf.example ./make_build/python_computing_node/python_computing_node/computing_node.conf
+	cp ./docs/start.sh ./make_build/python_computing_node/start.sh
+	cp ./docs/stop.sh ./make_build/python_computing_node/stop.sh
+	mkdir make_build/python_computing_node/venv
+	tar -xzf ./venv.tar.gz -C make_build/python_computing_node/venv
+
+clean_build:
+	rm -rf make_build
+
+venv.tar.gz: venv
+	conda pack -p ./venv -o ./venv.tar.gz
+
+venv:
+	conda create --copy -p ./venv -y
+	conda install -p ./venv python==3.9.7 -y;
+	./venv/bin/pip install --no-input  -r requirements.txt
+
+clean_venv:
+	rm -rf venv
+	rm -f ./venv.tar.gz
 
 test: docker_test clean_docker_test
 
@@ -35,5 +75,5 @@ clean_docker_test:
 	rm -rf ./run
 	rm -rf ./logs
 
-clean: clean_docker_test
+clean: clean_docker_test clean_build clean_venv clean_pack
 
