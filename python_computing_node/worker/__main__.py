@@ -3,6 +3,7 @@ import sys
 import argparse
 import json
 import socket
+import signal
 import logging.config
 
 from pathlib import Path
@@ -113,7 +114,16 @@ def main():
     worker_server.run()
 
 
+def exit_gracefully():
+    log = logging.getLogger('worker')
+    log.info('Terminating...')
+    exit(0)
+
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, exit_gracefully)
+    signal.signal(signal.SIGTERM, exit_gracefully)
     main()
+
 
 
