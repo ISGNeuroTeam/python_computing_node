@@ -7,8 +7,8 @@ interproc_storage = ../inter_proc_storage
 [execution_environment]
 # package name of execution environment
 package = test_execution_environment
-execution_environment_dir = ../execution_environment
-commands_dir = ../execution_environment/test_execution_environment/commands
+execution_environment_dir = ./execution_environment
+commands_dir = ./execution_environment/test_execution_environment/commands
 
 
 [worker]
