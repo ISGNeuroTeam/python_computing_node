@@ -40,9 +40,9 @@ make dev
 ```bash
 conda activate ./venv
 ```
+4. Run kafka or deploy [complex_rest](https://github.com/ISGNeuroTeam/complex_rest)
 
-
-4. Launch python computing node server:
+5. Launch python computing node server:
 ```bash
 python ./python_computing_node/main.py
 ```
