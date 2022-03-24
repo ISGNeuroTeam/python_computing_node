@@ -78,8 +78,11 @@ def main():
     args = parser.parse_args()
 
     config_logging(args.log_dir, args.log_level, args.port)
+    log = logging.getLogger('worker')
 
     storages = json.loads(args.storages_json)
+
+    log.info('get storages: ' + str(storages))
 
     socket_type = socket.AF_UNIX if args.socket_type == 'unix' else socket.AF_INET
     server_socket_type = socket.AF_UNIX if args.server_socket_type == 'unix' else socket.AF_INET
@@ -105,16 +108,17 @@ def main():
     command_executor_class = command_executor_module.CommandExecutor
     command_executor = command_executor_class(storages, args.commands_dir, progress_notifier.message)
 
+    log.info(f'socket_type: {socket_type}, port: {args.port}, run_dir: {run_dir}')
     # initialize worker server
     worker_server = WorkerServer(
         socket_type, args.port, command_executor, progress_notifier, run_dir
     )
-    log = logging.getLogger('worker')
+
     log.info(f'Starting worker server with options: execution_environment={args.execution_environment} port={args.port}')
     worker_server.run()
 
 
-def exit_gracefully():
+def exit_gracefully(*args):
     log = logging.getLogger('worker')
     log.info('Terminating...')
     exit(0)
