@@ -8,9 +8,3 @@ if [ -f "$PID_FILE" ]; then
     kill -15 `cat $PID_FILE`
     rm $PID_FILE
 fi
-
-for workerpid in ./run/worker*.pid
-do
-	echo "Stopping worker $workerpid"
-	kill -15 `cat $workerpid`
-done
