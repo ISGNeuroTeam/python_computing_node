@@ -46,7 +46,7 @@ venv.tar.gz: venv
 	conda pack -p ./venv -o ./venv.tar.gz
 
 computing_node.conf:
-	cp computing_node.conf.example computing_node.conf
+	cp ./python_computing_node/computing_node.conf.example ./python_computing_node/computing_node.conf
 
 dev: venv computing_node.conf
 
