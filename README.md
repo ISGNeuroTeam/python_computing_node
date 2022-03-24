@@ -16,10 +16,15 @@ python3 -m venv ./venv
 source ./venv/bin/activate
 pip install -r ./requirements.txt
 ```
-2. Configure rest.conf:
+2. Configure computing_node.conf:
 ```bash
 cp ./python_computing_node/rest.conf.example ./python_computing_node/rest.conf
 ```
+3. Launch python computing node server:
+```bash
+python ./python_computing_node/main.py
+```
+
 ### Deploy with conda
 ####  Prerequisites
 1. [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
@@ -29,23 +34,17 @@ cp ./python_computing_node/rest.conf.example ./python_computing_node/rest.conf
 ```bash
 make dev
 ```
-2. To activate virtual environment:
+2. Configure computing_node.conf.
+
+3. To activate virtual environment:
 ```bash
-source ./venv/bin/activate
-```
-3. Launch services:
-```bash
-./start.sh
+conda activate ./venv
 ```
 
-### Deploy with docker
-#### Prerequisites
-1. [Docker](https://docs.docker.com/engine/install/).
-[Manage Docker as a non-root user](https://docs.docker.com/engine/install/linux-postinstall/)
-2. [Docker compose](https://docs.docker.com/compose/install/)
-#### Deploy
+
+4. Launch python computing node server:
 ```bash
-docker-compose -f "docker-compose-dev.yml" up -d --build
+python ./python_computing_node/main.py
 ```
 
 ## Deployment
@@ -56,7 +55,11 @@ docker-compose -f "docker-compose-dev.yml" up -d --build
 - Conda
 - python 3.9.7  
     And python packages:  
-- 
+  - aiokafka==0.7.2
+  - kafka-python==2.0.2
+  - aiohttp==3.8.1
+  - gunicorn==20.1.0
+  - bottle==0.12.19
 
 
 ## Versioning

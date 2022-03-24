@@ -45,7 +45,10 @@ clean_build:
 venv.tar.gz: venv
 	conda pack -p ./venv -o ./venv.tar.gz
 
-dev: venv
+computing_node.conf:
+	cp computing_node.conf.example computing_node.conf
+
+dev: venv computing_node.conf
 
 venv:
 	conda create --copy -p ./venv -y
