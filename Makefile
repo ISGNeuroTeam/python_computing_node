@@ -17,6 +17,12 @@ GENERATE_BRANCH = $(shell git name-rev $$(git rev-parse HEAD) | cut -d\  -f2 | s
 SET_VERSION = $(eval VERSION=$(GENERATE_VERSION))
 SET_BRANCH = $(eval BRANCH=$(GENERATE_BRANCH))
 
+define clean_docker_containers
+	@echo "Stopping and removing docker containers"
+	docker-compose -f docker-compose-dev.yml stop
+	if [[ $$(docker ps -aq -f name=python_computing_node) ]]; then docker rm $$(docker ps -aq -f name=python_computing_node);  fi;
+endef
+
 pack: make_build
 	$(SET_VERSION)
 	$(SET_BRANCH)
@@ -59,7 +65,7 @@ clean_venv:
 	rm -rf venv
 	rm -f ./venv.tar.gz
 
-test: docker_test clean_docker_test
+test: docker_test
 
 run:
 	mkdir -p run
@@ -68,15 +74,15 @@ logs:
 	mkdir -p logs
 
 docker_test: run logs
+	$(call clean_docker_containers)
 	@echo "Testing..."
 	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml up -d --build
 	sleep 15
 	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml exec  python_computing_node  python -m unittest discover -s tests
+	$(call clean_docker_containers)
 
 clean_docker_test:
-	@echo "Clean tests"
-	docker-compose -f docker-compose-dev.yml stop
-	if [[ $$(docker ps -aq -f name=python_computing_node) ]]; then docker rm $$(docker ps -aq -f name=python_computing_node);  fi;
+	$(call clean_docker_containers)
 	rm -rf ./run
 	rm -rf ./logs
 
