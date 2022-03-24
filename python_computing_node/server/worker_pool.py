@@ -81,7 +81,7 @@ class WorkerPool:
                 worker_process.change_port(self._get_port_for_new_worker())
 
                 returned_code, stderr = await worker_process.spawn()
-                log.info(f'Process exited with code {returned_code}\n {stderr}')
+                log.warning(f'Worker process on port {worker_process.port} exited with code {returned_code}\n {stderr}')
 
         except asyncio.CancelledError:
             await worker_process.terminate()

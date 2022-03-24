@@ -45,6 +45,8 @@ clean_build:
 venv.tar.gz: venv
 	conda pack -p ./venv -o ./venv.tar.gz
 
+dev: venv
+
 venv:
 	conda create --copy -p ./venv -y
 	conda install -p ./venv python==3.9.7 -y;
