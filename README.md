@@ -20,7 +20,8 @@ pip install -r ./requirements.txt
 ```bash
 cp ./python_computing_node/rest.conf.example ./python_computing_node/rest.conf
 ```
-3. Launch python computing node server:
+3. Deploy [otl interpreter](https://github.com/ISGNeuroTeam/otl_interpreter) or just run kafka
+4. Launch python computing node server:
 ```bash
 python ./python_computing_node/main.py
 ```
@@ -40,7 +41,7 @@ make dev
 ```bash
 conda activate ./venv
 ```
-4. Run kafka or deploy [complex_rest](https://github.com/ISGNeuroTeam/complex_rest)
+4. Deploy [otl interpreter](https://github.com/ISGNeuroTeam/otl_interpreter) or just run kafka
 
 5. Launch python computing node server:
 ```bash
