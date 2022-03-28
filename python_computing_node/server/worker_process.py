@@ -350,6 +350,7 @@ class WorkerProcess:
         self.command = self.create_launch_command()
 
     async def terminate(self):
-        await self.process_session.close()
+        if self.process_session is not None:
+            await self.process_session.close()
         if self.proc is not None:
             self.proc.terminate()

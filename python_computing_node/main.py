@@ -99,13 +99,17 @@ async def main_coroutine():
             ini_config['computing_node'], worker_pool,
         )
         log.info('Starting server...')
+
         await server.run()
+        log.error('Server stopped')
 
     except asyncio.CancelledError:
         log.info('Gracefully stopping server')
         if worker_pool is not None:
+            log.info('Stopping worker pool')
             await worker_pool.terminate()
         if server is not None:
+            log.info('Stopping server')
             await server.stop()
 
 

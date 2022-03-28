@@ -30,7 +30,7 @@ pack: make_build
 	cd make_build; tar czf ../python_computing_node-$(VERSION)-$(BRANCH).tar.gz python_computing_node
 
 clean_pack:
-	rm -f python_computing_node-$(VERSION)-$(BRANCH).tar.gz
+	rm -f python_computing_node*.tar.gz
 
 make_build: venv.tar.gz
 	echo make_build
@@ -78,7 +78,7 @@ docker_test: run logs
 	@echo "Testing..."
 	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml up -d --build
 	sleep 15
-	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml exec  python_computing_node  python -m unittest discover -s tests
+	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml exec python_computing_node python -m unittest discover -s tests
 	$(call clean_docker_containers)
 
 clean_docker_test:

@@ -1,5 +1,6 @@
 import json
 import asyncio
+import logging
 
 from aiokafka import AIOKafkaProducer as Producer, AIOKafkaConsumer as Consumer
 
@@ -7,6 +8,8 @@ from .worker_listnener import WorkerListener
 from .timings import WORKER_POOL_SPAWN_TIME, KAFKA_WAIT_TIME
 
 COMPUTING_NODE_CONTROL_TOPIC = 'computing_node_control'
+
+log = logging.getLogger('server')
 
 
 class Server:
@@ -38,6 +41,7 @@ class Server:
         self._producer = Producer(
             bootstrap_servers=kafka_config['producer']['bootstrap_servers']
         )
+        self.started: bool = False
 
     async def _get_command_syntax(self):
         """
@@ -168,20 +172,27 @@ class Server:
         await asyncio.sleep(WORKER_POOL_SPAWN_TIME)
 
         # send register message to message queue
+        log.info('Registering commands')
         await self._register()
 
         # periodically send resources to dispatcher
+        log.info('Creating send resources task')
         asyncio.create_task(self._send_resources_task())
 
         # main task for job consuming
+        log.info('Starting consuming jobs')
         self._consuming_task = asyncio.create_task(self._start_job_consuming())
 
         # waiting for kafka topic auto creation
         await asyncio.sleep(KAFKA_WAIT_TIME)
 
+        self.started = True
         await asyncio.gather(self._consuming_task, self._worker_listener_task)
 
     async def stop(self):
+        if not self.started:
+            return
+
         await self._unregister()
         await self._producer.stop()
         await self._worker_listener.stop()
