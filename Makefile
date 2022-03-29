@@ -78,7 +78,7 @@ docker_test: run logs
 	@echo "Testing..."
 	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml up -d --build
 	sleep 15
-	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml exec python_computing_node python -m unittest discover -s tests
+	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml exec -T python_computing_node python -m unittest discover -s tests
 	$(call clean_docker_containers)
 
 clean_docker_test:
