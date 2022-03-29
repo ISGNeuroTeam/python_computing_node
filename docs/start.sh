@@ -17,4 +17,4 @@ mkdir -p ./logs
 mkdir -p ./run
 
 echo 'Running python computing node server...'
-python ./python_computing_node/main.py & echo $! > ./run/server.pid
+python ./python_computing_node/main.py > ./logs/server_stdout.log 2> ./logs/server_stderr.log & echo $! > ./run/server.pid
