@@ -31,7 +31,7 @@ socket_type = unix
 # will be auto generated with first launch if empty
 uuid =
 # hostid linux command will be used if empty
-host_id =
+host_id = test_host_id
 # type name of computing node EEP SPARK POSTPROCESSING
 type = test
 # sending resource info interval

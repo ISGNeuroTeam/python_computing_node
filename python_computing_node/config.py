@@ -75,7 +75,8 @@ def merge_dicts(first_dict, second_dict):
             node = result_dict.setdefault(key, {})
             result_dict[key] = merge_dicts(value, node)
         else:
-            result_dict[key] = value
+            if value != '':
+                result_dict[key] = value
 
     return result_dict
 
