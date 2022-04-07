@@ -1,5 +1,7 @@
 import time
+from pathlib import Path
 
+from .random_dataframe import random_data_frame
 
 syntax = {
         'normal_command': {
@@ -100,3 +102,24 @@ def do_error_command(command_dict, command_progress_message):
 def do_subsearch_command(command_dict, command_progress_message, execute):
     command_progress_message('Making subsearch')
     execute(command_dict['arguments']['subsearch'][0]['value'])
+
+
+def sys_write_result(command_dict, command_progress_message, storages_dict):
+    command_progress_message(f'Start system_command {command_dict["name"]} command')
+    storage_type = command_dict['arguments']['storage_type'][0]['value']
+    result_path = command_dict['arguments']['path'][0]['value']
+
+    write_random_df(Path(storages_dict[storage_type]) / result_path)
+    command_progress_message(f'Finish system_command {command_dict["name"]} command')
+
+
+def write_random_df(dir_path):
+    df, schema = random_data_frame()
+    result_path = dir_path / 'jsonl'
+    result_path.mkdir(parents=True, exist_ok=True)
+    # write schema
+    with open(result_path / '_SCHEMA', 'w') as file:
+        file.write(schema)
+
+    # write data
+    df.to_json(result_path / 'data', lines=True, orient="records")
