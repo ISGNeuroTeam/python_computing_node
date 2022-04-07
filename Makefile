@@ -1,7 +1,7 @@
 #.SILENT:
 SHELL = /bin/bash
 
-.PHONY: clean clean_build clean_venv.tar.gz clean_pack clean_kafka clean_unit test docker_test clean_docker_test
+.PHONY: clean clean_build clean_venv.tar.gz clean_pack clean_kafka clean_unit test docker_test clean_docker_test clean_test_computing_node_env
 
 all:
 	echo -e "Sections:\n\
@@ -54,7 +54,15 @@ venv.tar.gz: venv
 computing_node.conf:
 	cp ./python_computing_node/computing_node.conf.example ./python_computing_node/computing_node.conf
 
-dev: venv computing_node.conf
+dev: venv computing_node.conf python_computing_node/execution_environment/test_execution_environment/venv
+
+python_computing_node/execution_environment/test_execution_environment/venv:
+	conda create --copy -p ./python_computing_node/execution_environment/test_execution_environment/venv -y
+	conda install -p ./python_computing_node/execution_environment/test_execution_environment/venv python==3.9.7 -y;
+	./python_computing_node/execution_environment/test_execution_environment/venv/bin/pip install --no-input  -r ./python_computing_node/execution_environment/test_execution_environment/requirements.txt
+
+clean_test_computing_node_env:
+	rm -rf ./python_computing_node/execution_environment/test_execution_environment/venv
 
 venv:
 	conda create --copy -p ./venv -y
@@ -86,5 +94,5 @@ clean_docker_test:
 	rm -rf ./run
 	rm -rf ./logs
 
-clean: clean_docker_test clean_build clean_venv clean_pack
+clean: clean_docker_test clean_build clean_venv clean_pack clean_test_computing_node_env
 
