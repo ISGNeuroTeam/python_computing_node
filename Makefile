@@ -81,7 +81,7 @@ run:
 logs:
 	mkdir -p logs
 
-docker_test: run logs
+docker_test: python_computing_node/execution_environment/test_execution_environment/venv run logs
 	$(call clean_docker_containers)
 	@echo "Testing..."
 	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml up -d --build
