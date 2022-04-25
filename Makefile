@@ -19,7 +19,7 @@ SET_BRANCH = $(eval BRANCH=$(GENERATE_BRANCH))
 
 define clean_docker_containers
 	@echo "Stopping and removing docker containers"
-	docker-compose -f docker-compose-dev.yml stop
+	docker-compose -f docker-compose-test.yml stop
 	if [[ $$(docker ps -aq -f name=python_computing_node) ]]; then docker rm $$(docker ps -aq -f name=python_computing_node);  fi;
 endef
 
@@ -84,9 +84,9 @@ logs:
 docker_test: python_computing_node/execution_environment/test_execution_environment/venv run logs
 	$(call clean_docker_containers)
 	@echo "Testing..."
-	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml up -d --build
+	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-test.yml up -d --build
 	sleep 15
-	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml exec -T python_computing_node python -m unittest discover -s tests
+	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-test.yml exec -T python_computing_node python -m unittest discover -s tests
 	$(call clean_docker_containers)
 
 clean_docker_test:
