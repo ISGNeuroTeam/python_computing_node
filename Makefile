@@ -19,8 +19,13 @@ SET_BRANCH = $(eval BRANCH=$(GENERATE_BRANCH))
 
 define clean_docker_containers
 	@echo "Stopping and removing docker containers"
-	docker-compose -f docker-compose-test.yml stop
-	if [[ $$(docker ps -aq -f name=python_computing_node) ]]; then docker rm $$(docker ps -aq -f name=python_computing_node);  fi;
+	python_computing_node_containers=$$(docker ps -aq -f name=python_computing_node);\
+	if [[ $$python_computing_node_containers ]]; then\
+		docker stop $$python_computing_node_containers;\
+		docker rm $$python_computing_node_containers;\
+	fi;
+	rm -rf ./run
+	rm -rf ./logs
 endef
 
 pack: make_build
@@ -75,14 +80,11 @@ clean_venv:
 
 test: docker_test
 
-run:
-	mkdir -p run
 
-logs:
-	mkdir -p logs
-
-docker_test: python_computing_node/execution_environment/test_execution_environment/venv run logs
+docker_test: python_computing_node/execution_environment/test_execution_environment/venv
 	$(call clean_docker_containers)
+	mkdir -p run
+	mkdir -p logs
 	@echo "Testing..."
 	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-test.yml up -d --build
 	sleep 15
@@ -91,8 +93,6 @@ docker_test: python_computing_node/execution_environment/test_execution_environm
 
 clean_docker_test:
 	$(call clean_docker_containers)
-	rm -rf ./run
-	rm -rf ./logs
 
 clean: clean_docker_test clean_build clean_venv clean_pack clean_test_computing_node_env
 
