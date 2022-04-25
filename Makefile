@@ -64,7 +64,7 @@ dev: venv computing_node.conf python_computing_node/execution_environment/test_e
 python_computing_node/execution_environment/test_execution_environment/venv:
 	conda create --copy -p ./python_computing_node/execution_environment/test_execution_environment/venv -y
 	conda install -p ./python_computing_node/execution_environment/test_execution_environment/venv python==3.9.7 -y;
-	./python_computing_node/execution_environment/test_execution_environment/venv/bin/pip install --no-input  -r ./python_computing_node/execution_environment/test_execution_environment/requirements.txt
+	./python_computing_node/execution_environment/test_execution_environment/venv/bin/python3 ./python_computing_node/execution_environment/test_execution_environment/venv/bin/pip3 install --no-input  -r ./python_computing_node/execution_environment/test_execution_environment/requirements.txt
 
 clean_test_computing_node_env:
 	rm -rf ./python_computing_node/execution_environment/test_execution_environment/venv
