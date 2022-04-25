@@ -322,9 +322,6 @@ class WorkerProcess:
         await asyncio.sleep(WORKER_PROCESS_SPAWN_TIME)
         self.process_session, self.address = self._create_process_session()
 
-
-
-
         await self.proc.wait()
         return self.proc.returncode, self.proc.stderr
 

@@ -1,7 +1,12 @@
 import time
+import logging
+
 from pathlib import Path
 
 from .random_dataframe import random_data_frame
+
+
+log = logging.getLogger('test_execution_environment')
 
 syntax = {
         'normal_command': {
@@ -61,6 +66,7 @@ def do_sys_command(command_dict,  command_progress_message):
 
 
 def do_normal_command(command_dict,  command_progress_message):
+    log.info('Starting normal command')
     command_progress_message('Start normal command')
     stages = int(command_dict['arguments']['stages'][0]['value'])
     stage_time = int(command_dict['arguments']['stage_time'][0]['value'])
@@ -69,9 +75,11 @@ def do_normal_command(command_dict,  command_progress_message):
         time.sleep(stage_time)
         command_progress_message(f'Stage  {i} completed', stage=i, total_stages=stages)
     command_progress_message('Normal command finished')
+    log.info('Normal command finished')
 
 
 def do_error_command(command_dict, command_progress_message):
+    log.info('Error command starting')
     stage_time = 1
     error_stage = 1
 
@@ -100,11 +108,13 @@ def do_error_command(command_dict, command_progress_message):
 
 
 def do_subsearch_command(command_dict, command_progress_message, execute):
+    log.info('Subsearch command starting')
     command_progress_message('Making subsearch')
     execute(command_dict['arguments']['subsearch'][0]['value'])
 
 
 def sys_write_result(command_dict, command_progress_message, storages_dict):
+    log.info('Sys write command starting')
     command_progress_message(f'Start system_command {command_dict["name"]} command')
     storage_type = command_dict['arguments']['storage_type'][0]['value']
     result_path = command_dict['arguments']['path'][0]['value']
