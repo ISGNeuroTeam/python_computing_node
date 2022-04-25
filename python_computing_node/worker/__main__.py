@@ -13,9 +13,9 @@ from .server_client import ServerClient
 from .progress_notify import ProgressNotifier
 
 
-def config_logging(log_dir, log_level, worker_number):
+def config_logging(log_dir, log_level, worker_number, execution_env_dir):
     """
-    Configure worker logger
+    Configure logger for worker and  for every execution environment
     """
     log_dir_path = Path(log_dir)
     log_dir_path.mkdir(exist_ok=True)
@@ -46,6 +46,23 @@ def config_logging(log_dir, log_level, worker_number):
             },
         }
     }
+    for exec_env in Path(execution_env_dir).iterdir():
+        exec_env_name = exec_env.name
+        exec_env_log_dir = log_dir_path / exec_env_name
+        exec_env_log_dir.mkdir(parents=True, exist_ok=True)
+        config['handlers'][exec_env_name] = {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'maxBytes': 1024 * 1024 * 10,
+                'backupCount': 10,
+                'level': log_level,
+                'formatter': 'standard',
+                'filename': str(exec_env_log_dir / f'{exec_env_name}.log')
+        }
+        config['loggers'][exec_env_name] = {
+            'handlers': [exec_env_name],
+            'level': log_level,
+            'propagate': False
+        }
     logging.config.dictConfig(config)
 
 
@@ -77,7 +94,12 @@ def main():
 
     args = parser.parse_args()
 
-    config_logging(args.log_dir, args.log_level, args.port)
+    execution_environments_dir = Path(args.execution_environments_dir)
+    if not execution_environments_dir.exists():
+        raise ValueError('Execution environment directory doesn\'t exist')
+
+    config_logging(args.log_dir, args.log_level, args.port, execution_environments_dir)
+
     log = logging.getLogger('worker')
 
     storages = json.loads(args.storages_json)
@@ -89,15 +111,12 @@ def main():
 
     run_dir = args.run_directory
 
-    execution_environments_dir = Path(args.execution_environments_dir)
-    if not execution_environments_dir.exists():
-        raise ValueError('Execution environment directory doesn\'t exist')
+
 
     sys.path.append(args.execution_environments_dir)
 
     server_client = ServerClient(server_socket_type, args.server_port, run_dir)
 
-    # todo make real progress logger
     progress_notifier = ProgressNotifier(server_client)
 
     # import command executor

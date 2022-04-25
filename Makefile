@@ -1,7 +1,7 @@
 #.SILENT:
 SHELL = /bin/bash
 
-.PHONY: clean clean_build clean_venv.tar.gz clean_pack clean_kafka clean_unit test docker_test clean_docker_test
+.PHONY: clean clean_build clean_venv.tar.gz clean_pack clean_kafka clean_unit test docker_test clean_docker_test clean_test_computing_node_env
 
 all:
 	echo -e "Sections:\n\
@@ -19,7 +19,7 @@ SET_BRANCH = $(eval BRANCH=$(GENERATE_BRANCH))
 
 define clean_docker_containers
 	@echo "Stopping and removing docker containers"
-	docker-compose -f docker-compose-dev.yml stop
+	docker-compose -f docker-compose-test.yml stop
 	if [[ $$(docker ps -aq -f name=python_computing_node) ]]; then docker rm $$(docker ps -aq -f name=python_computing_node);  fi;
 endef
 
@@ -54,7 +54,15 @@ venv.tar.gz: venv
 computing_node.conf:
 	cp ./python_computing_node/computing_node.conf.example ./python_computing_node/computing_node.conf
 
-dev: venv computing_node.conf
+dev: venv computing_node.conf python_computing_node/execution_environment/test_execution_environment/venv
+
+python_computing_node/execution_environment/test_execution_environment/venv:
+	conda create --copy -p ./python_computing_node/execution_environment/test_execution_environment/venv -y
+	conda install -p ./python_computing_node/execution_environment/test_execution_environment/venv python==3.9.7 -y;
+	./python_computing_node/execution_environment/test_execution_environment/venv/bin/pip install --no-input  -r ./python_computing_node/execution_environment/test_execution_environment/requirements.txt
+
+clean_test_computing_node_env:
+	rm -rf ./python_computing_node/execution_environment/test_execution_environment/venv
 
 venv:
 	conda create --copy -p ./venv -y
@@ -73,12 +81,12 @@ run:
 logs:
 	mkdir -p logs
 
-docker_test: run logs
+docker_test: python_computing_node/execution_environment/test_execution_environment/venv run logs
 	$(call clean_docker_containers)
 	@echo "Testing..."
-	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml up -d --build
+	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-test.yml up -d --build
 	sleep 15
-	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-dev.yml exec -T python_computing_node python -m unittest discover -s tests
+	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-test.yml exec -T python_computing_node python -m unittest discover -s tests
 	$(call clean_docker_containers)
 
 clean_docker_test:
@@ -86,5 +94,5 @@ clean_docker_test:
 	rm -rf ./run
 	rm -rf ./logs
 
-clean: clean_docker_test clean_build clean_venv clean_pack
+clean: clean_docker_test clean_build clean_venv clean_pack clean_test_computing_node_env
 

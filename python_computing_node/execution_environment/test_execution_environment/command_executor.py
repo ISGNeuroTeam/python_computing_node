@@ -1,6 +1,8 @@
 from functools import partial
 
-from .test_commands import syntax, do_error_command, do_normal_command, do_subsearch_command, do_sys_command
+from .test_commands import (
+    syntax, do_error_command, do_normal_command, do_subsearch_command, do_sys_command, sys_write_result
+)
 
 
 class CommandExecutor:
@@ -31,6 +33,8 @@ class CommandExecutor:
                 self.depth += 1
                 do_subsearch_command(command, command_progress_message, self.execute)
                 self.depth -= 1
+            elif command['name'] == 'sys_write_result':
+                sys_write_result(command, command_progress_message, self.storages)
             elif command['name'].startswith('sys_'):
                 do_sys_command(command, command_progress_message)
             else:
