@@ -9,7 +9,6 @@ wait 5
 
 /kafka/kafka_2.13-3.0.0/bin/kafka-topics.sh --create --topic nodejob_status --bootstrap-server localhost:9092
 /kafka/kafka_2.13-3.0.0/bin/kafka-topics.sh --create --topic computing_node_control --bootstrap-server localhost:9092
-/kafka/kafka_2.13-3.0.0/bin/
 
 
 
