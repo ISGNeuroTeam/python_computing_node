@@ -47,6 +47,8 @@ def config_logging(log_dir, log_level, worker_number, execution_env_dir):
         }
     }
     for exec_env in Path(execution_env_dir).iterdir():
+        if not exec_env.is_dir():
+            continue
         exec_env_name = exec_env.name
         exec_env_log_dir = log_dir_path / exec_env_name
         exec_env_log_dir.mkdir(parents=True, exist_ok=True)
