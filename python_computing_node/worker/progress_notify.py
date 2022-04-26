@@ -4,20 +4,11 @@ from .server_client import ServerClient
 class ProgressNotifier:
     def __init__(self, server_client: ServerClient):
         self._server_client = server_client
-
-        #current job uuid
+        # current job uuid
         self._job_uuid = None
 
     def set_cur_job_uuid(self, uuid):
         self._job_uuid = uuid
-
-    def start_job(self, job_uuid: str):
-        self._job_uuid = job_uuid
-        # todo send message about job start
-
-    def stop_job(self):
-        self._job_uuid = None
-        # todo send message about job stop
 
     def message(
             self, message,

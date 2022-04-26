@@ -289,6 +289,9 @@ class WorkerProcess:
         return launch_command
 
     async def get_command_syntax(self):
+        """
+        Makes query to worker and returns command syntax of worker execution environment
+        """
         assert self.process_session is not None
         async with self.process_session.get(self.address + 'syntax') as resp:
             resp = await resp.content.read()
@@ -319,9 +322,6 @@ class WorkerProcess:
         await asyncio.sleep(WORKER_PROCESS_SPAWN_TIME)
         self.process_session, self.address = self._create_process_session()
 
-
-
-
         await self.proc.wait()
         return self.proc.returncode, self.proc.stderr
 
@@ -350,6 +350,9 @@ class WorkerProcess:
         self.command = self.create_launch_command()
 
     async def terminate(self):
+        """
+        Ternminates process session and process
+        """
         if self.process_session is not None:
             await self.process_session.close()
         if self.proc is not None:

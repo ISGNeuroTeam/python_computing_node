@@ -14,8 +14,8 @@ WORKDIR /python_computing_node
 COPY requirements.txt /python_computing_node/
 RUN pip install --no-cache-dir  -r requirements.txt
 
-RUN pip install --no-cache-dir  -r requirements.txt
+COPY python_computing_node /python_computing_node/
+COPY tests /python_computing_node/
 
-COPY . .
 ENTRYPOINT ["/python_computing_node/docs/docker_dev/python_computing_node/entrypoint.sh"]
 CMD ["/python_computing_node/docs/docker_dev/python_computing_node/start.sh"]
