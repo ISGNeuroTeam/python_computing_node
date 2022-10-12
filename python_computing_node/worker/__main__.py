@@ -66,6 +66,36 @@ def config_logging(log_dir, log_level, worker_number, execution_env_dir):
     logging.config.dictConfig(config)
 
 
+def add_projects_venvs(commands_dir: str):
+    """
+    Adds to sys.path all projects virtual enviroments
+    Project virtual environment is directory in commands director which ends with _venv
+    """
+
+    log = logging.getLogger('worker')
+
+    venv_relative_dirs_list = [
+        f'lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages',
+        f'lib/python{sys.version_info.major}{sys.version_info.minor}.zip',
+        f'lib/python{sys.version_info.major}.{sys.version_info.minor}',
+        f'lib/python{sys.version_info.major}.{sys.version_info.minor}/lib-dynload',
+    ]
+
+    commands_dir = Path(commands_dir)
+    project_venvs = [f for f in commands_dir.resolve().glob('*_venv') if f.is_dir()]
+
+    for project_venv in project_venvs:
+        log.info(f'Found project virtual environment: {project_venv}')
+        sys.path.extend(
+            list(
+                map(
+                    lambda x: str(project_venv / x),
+                    venv_relative_dirs_list
+                )
+            )
+        )
+
+
 def main():
     parser = argparse.ArgumentParser(description='Worker for node job execution')
 
@@ -101,6 +131,8 @@ def main():
     config_logging(args.log_dir, args.log_level, args.port, execution_environments_dir)
 
     log = logging.getLogger('worker')
+
+    add_projects_venvs(args.commands_dir)
 
     storages = json.loads(args.storages_json)
 
