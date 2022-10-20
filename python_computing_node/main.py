@@ -28,7 +28,7 @@ def config_logging(logging_config):
             'server': {
                 'class': 'logging.handlers.RotatingFileHandler',
                 'maxBytes': 1024 * 1024 * int(logging_config['rotation_size']),
-                'backupCount': logging_config['keep_files'],
+                'backupCount': int(logging_config['keep_files']),
                 'level': logging_config['level'],
                 'formatter': 'standard',
                 'filename': str(log_dir_path / 'server.log')
