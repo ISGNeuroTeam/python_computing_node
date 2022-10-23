@@ -342,6 +342,7 @@ class WorkerProcess:
     @_wait_for_process_session
     async def send_job(self, node_job):
         try:
+            log.info(f'Job with uuid={node_job["uuid"]} sent to {self.port} worker')
             async with self.process_session.post(self.address + 'job', data=json.dumps(node_job)) as resp:
                 resp = await resp.content.read()
                 try:

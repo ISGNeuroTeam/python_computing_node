@@ -37,10 +37,18 @@ def config_logging(log_dir, log_level, worker_number, execution_env_dir):
                 'formatter': 'standard',
                 'filename': str(log_dir_path / f'worker{worker_number}.log')
             },
+            'worker_error': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'maxBytes': 1024 * 1024 * 10,
+                'backupCount': 10,
+                'level': 'ERROR',
+                'formatter': 'standard',
+                'filename': str(log_dir_path / f'worker_errors.log')
+            },
         },
         'loggers': {
             'worker': {
-                'handlers': ['worker'],
+                'handlers': ['worker', 'worker_error'],
                 'level': log_level,
                 'propagate': False
             },
