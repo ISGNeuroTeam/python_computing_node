@@ -103,6 +103,11 @@ def add_projects_venvs(commands_dir: str):
                 )
             )
         )
+        # run configuration script
+        venv_config_file = project_venv / 'config.py'
+        if venv_config_file.exists():
+            log.info(f'Executing configuration script for {str(project_venv)}')
+            exec(open(venv_config_file).read())
 
 
 def main():
@@ -171,6 +176,7 @@ def main():
     except Exception as err:
         log.error(f'Fail to initialize command executor {err}')
         log.error(traceback.format_exc())
+        return
 
     log.info(f'socket_type: {socket_type}, port: {args.port}, run_dir: {run_dir}')
     # initialize worker server
