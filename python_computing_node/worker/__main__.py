@@ -1,4 +1,5 @@
 import importlib
+import traceback
 import sys
 import argparse
 import json
@@ -163,9 +164,13 @@ def main():
     command_executor_module = importlib.import_module(
         f'{args.execution_environment}.command_executor'
     )
-
-    command_executor_class = command_executor_module.CommandExecutor
-    command_executor = command_executor_class(storages, args.commands_dir, progress_notifier.message)
+    try:
+        command_executor_class = command_executor_module.CommandExecutor
+        command_executor = command_executor_class(storages, args.commands_dir, progress_notifier.message)
+        log.info(f'Command executor with class {str(command_executor_class)} initialized successfully')
+    except Exception as err:
+        log.error(f'Fail to initialize command executor {err}')
+        log.error(traceback.format_exc())
 
     log.info(f'socket_type: {socket_type}, port: {args.port}, run_dir: {run_dir}')
     # initialize worker server
