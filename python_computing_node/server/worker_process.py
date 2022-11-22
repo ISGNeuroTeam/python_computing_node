@@ -288,6 +288,19 @@ class WorkerProcess:
         )
         return launch_command
 
+    def _wait_for_process_session(f):
+        """
+        Decorator for waiting process session is not None
+        """
+        async def wrapper(self, *args, **kwargs):
+            while self.process_session is None:
+                log.warning('Waiting for process session')
+                await asyncio.sleep(1)
+            return await f(self, *args, **kwargs)
+
+        return wrapper
+
+    @_wait_for_process_session
     async def get_command_syntax(self):
         """
         Makes query to worker and returns command syntax of worker execution environment
@@ -300,16 +313,19 @@ class WorkerProcess:
 
     def _create_process_session(self):
         if self.socket_type == 'unix':
-            socket_path = Path(self.run_dir) / f'worker{self.port}.socket'
-            conn = aiohttp.UnixConnector(path=str(socket_path))
+            conn = aiohttp.UnixConnector(path=self.socket_path)
             session = aiohttp.ClientSession(connector=conn)
             address = 'http://localhost/'
-            log.info(f'create sesssion with worker on socket {socket_path}')
+            log.info(f'create sesssion with worker on socket {self.socket_path}')
         else:
             address = f'http://localhost:{self.port}/'
             session = aiohttp.ClientSession()
             log.info(f'create session with worker on address {address}')
         return session, address
+
+    @property
+    def socket_path(self):
+        return str(Path(self.run_dir) / f'worker{self.port}.socket')
 
     async def spawn(self):
         """
@@ -318,15 +334,15 @@ class WorkerProcess:
         """
         log.info(f'Spawing worker: {str(self.command)}')
         self.proc = await self.command.exec()
-        # wait for worker server started
-        await asyncio.sleep(WORKER_PROCESS_SPAWN_TIME)
         self.process_session, self.address = self._create_process_session()
 
         await self.proc.wait()
         return self.proc.returncode, self.proc.stderr
 
+    @_wait_for_process_session
     async def send_job(self, node_job):
         try:
+            log.info(f'Job with uuid={node_job["uuid"]} sent to {self.port} worker')
             async with self.process_session.post(self.address + 'job', data=json.dumps(node_job)) as resp:
                 resp = await resp.content.read()
                 try:
@@ -348,6 +364,7 @@ class WorkerProcess:
     def change_port(self, new_port):
         self.port = new_port
         self.command = self.create_launch_command()
+        self.process_session = None
 
     async def terminate(self):
         """

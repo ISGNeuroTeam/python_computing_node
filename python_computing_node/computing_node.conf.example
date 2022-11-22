@@ -21,7 +21,7 @@ memory_limit = 250
 # process limit per worker (only for docker)
 proc_num_limit = 4
 # number of workers
-workers = 4
+workers = 8
 # listening ports for workers 8091, 8092, 8093 ... or index for socket file
 start_port = 50101
 # socket type for worker. unix or inet

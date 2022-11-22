@@ -11,20 +11,20 @@ You need:
 
 #### Deploy
 1. Install virtual environment from requirements.txt:
-```bash
-python3 -m venv ./venv
-source ./venv/bin/activate
-pip install -r ./requirements.txt
-```
+    ```bash
+    python3 -m venv ./venv
+    source ./venv/bin/activate
+    pip install -r ./requirements.txt
+    ```
 2. Configure computing_node.conf:
-```bash
-cp ./python_computing_node/rest.conf.example ./python_computing_node/rest.conf
-```
+    ```bash
+    cp ./python_computing_node/rest.conf.example ./python_computing_node/rest.conf
+    ```
 3. Deploy [otl interpreter](https://github.com/ISGNeuroTeam/otl_interpreter) or just run kafka
 4. Launch python computing node server:
-```bash
-python ./python_computing_node/main.py
-```
+    ```bash
+    python ./python_computing_node/main.py
+    ```
 
 ### Deploy with conda
 ####  Prerequisites
@@ -32,15 +32,15 @@ python ./python_computing_node/main.py
 2. [Conda-Pack](https://conda.github.io/conda-pack)
 #### Deploy
 1. Create virtual environment for project:
-```bash
-make dev
-```
+    ```bash
+    make dev
+    ```
 2. Configure computing_node.conf.
 
 3. To activate virtual environment:
-```bash
-conda activate ./venv
-```
+    ```bash
+    conda activate ./venv
+    ```
 4. Deploy [otl interpreter](https://github.com/ISGNeuroTeam/otl_interpreter) or just run kafka
 
 5. Launch python computing node server:
@@ -50,7 +50,12 @@ python ./python_computing_node/main.py
 
 ## Deployment
 1. Unpack tar archive to destination directory
-2. Run `start.sh`
+2. Create config
+    ```bash
+    cp ./python_computing_node/computing_node.conf.example ./python_computing_node/computing_node.conf
+    ```
+3. Unpack one or more execution environments in execution environment directory. For example see [pp_exec_env](https://github.com/ISGNeuroTeam/pp_exec_env)
+4. Run `start.sh`
 
 ## Built With
 - Conda

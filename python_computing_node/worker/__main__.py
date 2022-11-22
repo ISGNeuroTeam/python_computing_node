@@ -1,4 +1,5 @@
 import importlib
+import traceback
 import sys
 import argparse
 import json
@@ -37,10 +38,18 @@ def config_logging(log_dir, log_level, worker_number, execution_env_dir):
                 'formatter': 'standard',
                 'filename': str(log_dir_path / f'worker{worker_number}.log')
             },
+            'worker_error': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'maxBytes': 1024 * 1024 * 10,
+                'backupCount': 10,
+                'level': 'ERROR',
+                'formatter': 'standard',
+                'filename': str(log_dir_path / f'worker_errors.log')
+            },
         },
         'loggers': {
             'worker': {
-                'handlers': ['worker'],
+                'handlers': ['worker', 'worker_error'],
                 'level': log_level,
                 'propagate': False
             },
@@ -66,6 +75,41 @@ def config_logging(log_dir, log_level, worker_number, execution_env_dir):
             'propagate': False
         }
     logging.config.dictConfig(config)
+
+
+def add_projects_venvs(commands_dir: str):
+    """
+    Adds to sys.path all projects virtual enviroments
+    Project virtual environment is directory in commands director which ends with _venv
+    """
+
+    log = logging.getLogger('worker')
+
+    venv_relative_dirs_list = [
+        f'lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages',
+        f'lib/python{sys.version_info.major}{sys.version_info.minor}.zip',
+        f'lib/python{sys.version_info.major}.{sys.version_info.minor}',
+        f'lib/python{sys.version_info.major}.{sys.version_info.minor}/lib-dynload',
+    ]
+
+    commands_dir = Path(commands_dir)
+    project_venvs = [f for f in commands_dir.resolve().glob('*_venv') if f.is_dir()]
+
+    for project_venv in project_venvs:
+        log.info(f'Found project virtual environment: {project_venv}')
+        sys.path.extend(
+            list(
+                map(
+                    lambda x: str(project_venv / x),
+                    venv_relative_dirs_list
+                )
+            )
+        )
+        # run configuration script
+        venv_config_file = project_venv / 'config.py'
+        if venv_config_file.exists():
+            log.info(f'Executing configuration script for {str(project_venv)}')
+            exec(open(venv_config_file).read())
 
 
 def main():
@@ -104,6 +148,8 @@ def main():
 
     log = logging.getLogger('worker')
 
+    add_projects_venvs(args.commands_dir)
+
     storages = json.loads(args.storages_json)
 
     log.info('get storages: ' + str(storages))
@@ -125,9 +171,14 @@ def main():
     command_executor_module = importlib.import_module(
         f'{args.execution_environment}.command_executor'
     )
-
-    command_executor_class = command_executor_module.CommandExecutor
-    command_executor = command_executor_class(storages, args.commands_dir, progress_notifier.message)
+    try:
+        command_executor_class = command_executor_module.CommandExecutor
+        command_executor = command_executor_class(storages, args.commands_dir, progress_notifier.message)
+        log.info(f'Command executor with class {str(command_executor_class)} initialized successfully')
+    except Exception as err:
+        log.error(f'Fail to initialize command executor {err}')
+        log.error(traceback.format_exc())
+        return
 
     log.info(f'socket_type: {socket_type}, port: {args.port}, run_dir: {run_dir}')
     # initialize worker server
