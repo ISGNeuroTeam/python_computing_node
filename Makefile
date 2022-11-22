@@ -103,14 +103,14 @@ test: docker_test
 
 
 docker_test: python_computing_node/execution_environment/test_execution_environment/venv
-	$(call clean_docker_containers)
+	-$(call clean_docker_containers)
 	mkdir -p run
 	mkdir -p logs
 	@echo "Testing..."
 	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-test.yml up -d --build
 	sleep 15
 	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-test.yml exec -T python_computing_node python -m unittest discover -s tests
-	$(call clean_docker_containers)
+	-$(call clean_docker_containers)
 
 clean_docker_test:
 	$(call clean_docker_containers)
