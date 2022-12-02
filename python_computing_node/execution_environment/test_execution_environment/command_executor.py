@@ -16,7 +16,10 @@ class CommandExecutor:
     def get_command_syntax():
         return syntax
 
-    def execute(self, dict_commands):
+    def execute(self, dict_commands, platform_envs=None):
+        if platform_envs is None:
+            platform_envs={'user_guid': 'test_user_guid'}
+
         for command_index, command in enumerate(dict_commands):
             command_progress_message = partial(
                 self.progress_message,
