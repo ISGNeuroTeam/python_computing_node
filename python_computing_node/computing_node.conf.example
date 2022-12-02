@@ -1,7 +1,8 @@
 [storages]
-shared_storage = ../shared_storage
-local_storage = ../local_storage
-interproc_storage = ../inter_proc_storage
+shared_post_processing = /opt/otp/shared_storage
+local_post_processing = /opt/otp/local_storage
+interproc_storage = /opt/otp/interproc_storage
+
 
 
 [execution_environment]

@@ -41,7 +41,9 @@ class WorkerServer:
             self.progress_notifier.set_cur_job_uuid(node_job['uuid'])
 
             log.info(f'Get node job {node_job["uuid"]}')
-            self.command_executor.execute(node_job['commands'])
+            self.command_executor.execute(
+                node_job['commands'], {'user_guid': node_job['user_guid'] if 'user_guid' in node_job else None}
+            )
             log.info(f'Node job {node_job["uuid"]} finished')
 
             return {
