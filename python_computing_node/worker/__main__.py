@@ -170,35 +170,39 @@ def main():
 
     run_dir = args.run_directory
 
-
-
     sys.path.append(args.execution_environments_dir)
 
     server_client = ServerClient(server_socket_type, args.server_port, run_dir)
 
     progress_notifier = ProgressNotifier(server_client)
 
-    # import command executor
-    command_executor_module = importlib.import_module(
-        f'{args.execution_environment}.command_executor'
-    )
     try:
+        # import command executor
+        command_executor_module = importlib.import_module(
+            f'{args.execution_environment}.command_executor'
+        )
         command_executor_class = command_executor_module.CommandExecutor
         command_executor = command_executor_class(storages, args.commands_dir, progress_notifier.message)
         log.info(f'Command executor with class {str(command_executor_class)} initialized successfully')
     except Exception as err:
         log.error(f'Fail to initialize command executor {err}')
         log.error(traceback.format_exc())
-        return
+        return -1
 
     log.info(f'socket_type: {socket_type}, port: {args.port}, run_dir: {run_dir}')
-    # initialize worker server
-    worker_server = WorkerServer(
-        socket_type, args.port, command_executor, progress_notifier, run_dir
-    )
+    try:
+        # initialize worker server
+        worker_server = WorkerServer(
+            socket_type, args.port, command_executor, progress_notifier, run_dir
+        )
 
-    log.info(f'Starting worker server with options: execution_environment={args.execution_environment} port={args.port}')
-    worker_server.run()
+        log.info(f'Starting worker server with options: execution_environment={args.execution_environment} port={args.port}')
+        worker_server.run()
+    except Exception as err:
+        log.error(f'Fail to run worker server {err}')
+        log.error(traceback.format_exc())
+        return -1
+    return 0
 
 
 def exit_gracefully(*args):
@@ -210,7 +214,7 @@ def exit_gracefully(*args):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, exit_gracefully)
     signal.signal(signal.SIGTERM, exit_gracefully)
-    main()
+    exit(main())
 
 
 
