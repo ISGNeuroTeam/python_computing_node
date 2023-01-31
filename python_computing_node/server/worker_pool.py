@@ -2,6 +2,8 @@ import asyncio
 import logging
 
 from copy import copy
+from collections import deque
+from datetime import datetime, timedelta
 
 from .worker_process import WorkerProcess
 from .timings import WORKER_PROCESS_TERMINATE_TIME, WORKER_PROCESS_SPAWN_TIME
@@ -75,6 +77,9 @@ class WorkerPool:
         """
         Spawn worker process
         """
+        max_retry = 3  # how many times restart worker process if it fails
+        fail_check_period = 7
+        exit_time = deque(maxlen=max_retry)
         try:
             while True:
                 # change port before start
@@ -82,7 +87,14 @@ class WorkerPool:
 
                 returned_code, stderr = await worker_process.spawn()
                 log.warning(f'Worker process on port {worker_process.port} exited with code {returned_code}\n {stderr}')
-
+                exit_time.append(datetime.now())
+                if max_retry == len(exit_time):
+                    if exit_time[-1] - exit_time[0] <= timedelta(seconds=fail_check_period):
+                        log.error(
+                            f'Too many worker restarts in {fail_check_period} seconds. Error occurred in worker' 
+                            f' see worker{self._current_port}.log for details'
+                        )
+                        await worker_process.terminate()
         except asyncio.CancelledError:
             await worker_process.terminate()
             log.info(f'worker terminated')
