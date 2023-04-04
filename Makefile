@@ -63,6 +63,8 @@ make_build: venv.tar.gz
 	echo make_build
 	mkdir -p make_build/python_computing_node
 	cp -R ./python_computing_node make_build/python_computing_node
+	cp setup.py make_build/python_computing_node/
+	cp *.md make_build/python_computing_node/
 	mkdir ./make_build/python_computing_node/logs
 	mkdir ./make_build/python_computing_node/run
 	mkdir ./make_build/python_computing_node/execution_environment
