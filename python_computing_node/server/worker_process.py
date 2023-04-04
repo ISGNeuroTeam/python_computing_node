@@ -75,7 +75,8 @@ class UlimitLaunchCommand(LaunchCommand):
             env={
               'PYTHONPATH': str(BASE_SOURCE_DIR)
             },
-            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE
+            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
         )
 
     def _get_main_program(self):
@@ -138,7 +139,8 @@ class DockerLaunchCommand(LaunchCommand):
     async def exec(self):
         return await asyncio.create_subprocess_exec(
             *self._command,
-            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE
+            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
         )
 
     def _get_main_program(self):
@@ -337,7 +339,8 @@ class WorkerProcess:
         self.process_session, self.address = self._create_process_session()
 
         await self.proc.wait()
-        return self.proc.returncode, self.proc.stderr
+        proc_stderr = await self.proc.stderr.read()
+        return self.proc.returncode, proc_stderr.decode()
 
     @_wait_for_process_session
     async def send_job(self, node_job):

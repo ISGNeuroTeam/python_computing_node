@@ -161,22 +161,26 @@ def main():
 
     log = logging.getLogger('worker')
 
-    add_projects_venvs(args.commands_dir)
+    try:
+        add_projects_venvs(args.commands_dir)
 
-    storages = json.loads(args.storages_json)
+        storages = json.loads(args.storages_json)
 
-    log.info('get storages: ' + str(storages))
+        log.info('get storages: ' + str(storages))
 
-    socket_type = socket.AF_UNIX if args.socket_type == 'unix' else socket.AF_INET
-    server_socket_type = socket.AF_UNIX if args.server_socket_type == 'unix' else socket.AF_INET
+        socket_type = socket.AF_UNIX if args.socket_type == 'unix' else socket.AF_INET
+        server_socket_type = socket.AF_UNIX if args.server_socket_type == 'unix' else socket.AF_INET
 
-    run_dir = args.run_directory
+        run_dir = args.run_directory
 
-    sys.path.append(args.execution_environments_dir)
+        sys.path.append(args.execution_environments_dir)
 
-    server_client = ServerClient(server_socket_type, args.server_port, run_dir)
+        server_client = ServerClient(server_socket_type, args.server_port, run_dir)
 
-    progress_notifier = ProgressNotifier(server_client)
+        progress_notifier = ProgressNotifier(server_client)
+    except Exception as err:
+        log.error(traceback.format_exc())
+        return -1
 
     try:
         # import command executor
