@@ -51,10 +51,18 @@ class WorkerPool:
         """
         Denotes worker as free worker
         """
-        worker_index = self._node_job_worker_index[job_uuid]
-        self._free_workers_indexes.add(worker_index)
+        if job_uuid in self._node_job_worker_index:
+            worker_index = self._node_job_worker_index[job_uuid]
+            self._free_workers_indexes.add(worker_index)
+            self._current_worker_jobs[worker_index] = None
+        self._node_job_worker_index.pop(job_uuid, None)
+
+    def _release_worker_by_index(self, worker_index):
+        job_uuid = self._current_worker_jobs[worker_index]
         self._current_worker_jobs[worker_index] = None
-        del self._node_job_worker_index[job_uuid]
+        self._free_workers_indexes.add(worker_index)
+        self._node_job_worker_index.pop(job_uuid, None)
+
 
     def _get_worker_for_job(self, job_uuid):
         return self._node_job_worker_index[job_uuid]
