@@ -76,6 +76,7 @@ class WorkerServer:
 
         config['timeout'] = 0
         config['loglevel'] = 'info'
+        config['workers'] = 1
         config['pidfile'] = str(Path(run_dir) / f'worker{port}.pid')
 
         handler = app
