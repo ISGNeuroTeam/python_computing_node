@@ -70,7 +70,7 @@ class TestComputingNode(unittest.TestCase):
         self.assertEqual(command['host_id'], 'test_host_id')
         syntax = command['otl_command_syntax']
         commands_name_set_from_response = set(syntax.keys())
-        commands_name_set = {'normal_command', 'error_command', 'subsearch_command'}
+        commands_name_set = {'normal_command', 'error_command', 'subsearch_command', 'command_with_threads'}
         self.assertSetEqual(commands_name_set_from_response, commands_name_set)
         # second message is resource message
         msg = next(consumer)
