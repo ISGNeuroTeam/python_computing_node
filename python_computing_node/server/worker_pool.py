@@ -111,8 +111,16 @@ class WorkerPool:
         awaits result and return it
         """
         worker_process = self._reserve_worker_for_job(node_job['uuid'])
-        resp = await worker_process.send_job(node_job)
-        self._release_worker(node_job['uuid'])
+        try:
+            resp = await worker_process.send_job(node_job)
+        except Exception as err:
+            log.error(str(err))
+            resp = {
+                'status': 'FAILED',
+                'status_text': str(err)
+            }
+        finally:
+            self._release_worker(node_job['uuid'])
 
         # if node job was canceled ignore fail status
 
