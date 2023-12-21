@@ -45,6 +45,7 @@ class WorkerPool:
         free_worker_index = self._free_workers_indexes.pop()
         self._current_worker_jobs[free_worker_index] = job_uuid
         self._node_job_worker_index[job_uuid] = free_worker_index
+        log.debug(f'Worker with index {free_worker_index} reserved. Job uuid is {job_uuid}.')
         return self._worker_processes[free_worker_index]
 
     def _release_worker(self, job_uuid):
@@ -104,8 +105,10 @@ class WorkerPool:
                         )
                         await worker_process.terminate()
         except asyncio.CancelledError:
+            log.info(f'Canceling asycnio task with worker process')
             await worker_process.terminate()
             log.info(f'worker terminated')
+            raise
 
     def run_worker_processes_forever(self):
         for i in range(self._workers_count):
