@@ -1,7 +1,7 @@
 from functools import partial
 
 from .test_commands import (
-    syntax, do_error_command, do_normal_command, do_subsearch_command, do_sys_command, sys_write_result
+    syntax, do_error_command, do_normal_command, do_subsearch_command, do_sys_command, sys_write_result, do_command_with_threads
 )
 
 
@@ -30,6 +30,8 @@ class CommandExecutor:
             )
             if command['name'] == 'normal_command':
                 do_normal_command(command, command_progress_message)
+            elif command['name'] == 'command_with_threads':
+                do_command_with_threads(command, command_progress_message)
             elif command['name'] == 'error_command':
                 do_error_command(command, command_progress_message)
             elif command['name'] == 'subsearch_command':

@@ -1,5 +1,6 @@
 import time
 import logging
+import threading
 
 from pathlib import Path
 
@@ -56,6 +57,17 @@ syntax = {
                             "required": True,
                         },
                     ]
+            },
+            'command_with_threads': {
+                "rules":
+                [
+                    {
+                        "name": "count",
+                        "type": "kwarg",
+                        "key": "count",
+                        "required": True,
+                    },
+                ]
             }
 }
 
@@ -121,6 +133,22 @@ def sys_write_result(command_dict, command_progress_message, storages_dict):
 
     write_random_df(Path(storages_dict[storage_type]) / result_path)
     command_progress_message(f'Finish system_command {command_dict["name"]} command')
+
+
+def target_for_thread():
+    for _ in range(10):
+        time.sleep(5)
+
+def do_command_with_threads(command_dict, command_progress_message):
+    log.info('command with threads starting')
+    command_progress_message(f'Creating threads')
+    number_of_threads = command_dict['arguments']['count'][0]['value']
+    for _ in range(number_of_threads):
+        new_thread = threading.Thread(target=target_for_thread)
+        new_thread.start()
+    command_progress_message('Threads are created')
+    new_thread.join()
+    command_progress_message('All threads are completed')
 
 
 def write_random_df(dir_path):
