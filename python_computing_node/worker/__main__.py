@@ -211,7 +211,7 @@ def main():
     return 0
 
 
-def exit_gracefully(*args):
+def exit_gracefully(*args, **kwargs):
     log = logging.getLogger('worker')
     log.info('Terminating...')
     exit(0)
