@@ -2,6 +2,7 @@ import json
 import asyncio
 import logging
 
+from uuid import UUID
 from aiokafka import AIOKafkaProducer as Producer, AIOKafkaConsumer as Consumer
 
 from .worker_listnener import WorkerListener
@@ -95,6 +96,8 @@ class Server:
         """
         Async task for running new node job
         """
+        log.debug(f'Getting job {job}')
+        job['uuid'] = str(UUID(job['uuid']))
         if job['status'] == 'CANCELED':
             await self._worker_pool.cancel_job(job)
             return

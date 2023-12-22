@@ -1,3 +1,4 @@
+import os
 import importlib
 import traceback
 import sys
@@ -12,6 +13,14 @@ from pathlib import Path
 from .worker_server import WorkerServer
 from .server_client import ServerClient
 from .progress_notify import ProgressNotifier
+
+
+# limit threads for libs
+os.environ["OMP_NUM_THREADS"] = "4" 
+os.environ["OPENBLAS_NUM_THREADS"] = "4" 
+os.environ["MKL_NUM_THREADS"] = "4" 
+os.environ["VECLIB_MAXIMUM_THREADS"] = "4" 
+os.environ["NUMEXPR_NUM_THREADS"] = "4" 
 
 
 def config_logging(log_dir, log_level, worker_number, execution_env_dir):
@@ -30,6 +39,14 @@ def config_logging(log_dir, log_level, worker_number, execution_env_dir):
             },
         },
         'handlers': {
+            'default': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'maxBytes': 1024 * 1024 * 10,
+                'backupCount': 10,
+                'level': log_level,
+                'formatter': 'standard',
+                'filename': str(log_dir_path / f'default_worker_logger.log')
+            },
             'worker': {
                 'class': 'logging.handlers.RotatingFileHandler',
                 'maxBytes': 1024 * 1024 * 10,
@@ -56,6 +73,11 @@ def config_logging(log_dir, log_level, worker_number, execution_env_dir):
             },
         },
         'loggers': {
+            '':{
+                'handlers': ['default', ],
+                'level': log_level,
+                'propagate': False
+            },
             'worker': {
                 'handlers': ['worker', 'worker_error'],
                 'level': log_level,
