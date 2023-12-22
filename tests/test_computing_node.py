@@ -2,6 +2,7 @@ import unittest
 import json
 import time
 
+from uuid import UUID
 from config import ini_config
 from server.timings import WORKER_PROCESS_RESTART_TIME
 
@@ -99,7 +100,7 @@ class TestComputingNode(unittest.TestCase):
         self.assertEqual(msg_dict['status'], 'FINISHED')
 
     def test3_error_command(self):
-        job_uuid = "000000000000000000000000000error"
+        job_uuid = "00000000000000000000000000011111"
         commands = [{"name": "error_command", "arguments": {}}]
         self._send_job(commands, job_uuid)
 
@@ -144,7 +145,7 @@ class TestComputingNode(unittest.TestCase):
         msg = next(self.node_job_status_consumer)
         msg_dict = json.loads(msg.value)
         print(msg_dict)
-        self.assertEqual(msg_dict['uuid'], "00000000000000000000000000000011")
+        self.assertEqual(msg_dict['uuid'], str(UUID("00000000000000000000000000000011")))
         self.assertEqual(msg_dict['status'], 'CANCELED')
 
         # now must not be declined
@@ -154,7 +155,7 @@ class TestComputingNode(unittest.TestCase):
             msg = next(self.node_job_status_consumer)
             msg_dict = json.loads(msg.value)
             print(msg_dict)
-            self.assertEqual(msg_dict['uuid'], "00000000000000000000000000000016")
+            self.assertEqual(msg_dict['uuid'], str(UUID("00000000000000000000000000000016")))
             self.assertEqual(msg_dict['status'], 'RUNNING')
 
 
