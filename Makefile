@@ -19,6 +19,8 @@ Addition section:\n\
 VERSION := $(shell cat setup.py | grep __version__ | head -n 1 | sed -re "s/[^\"']+//" | sed -re "s/[\"',]//g")
 BRANCH := $(shell git name-rev $$(git rev-parse HEAD) | cut -d\  -f2 | sed -re 's/^(remotes\/)?origin\///' | tr '/' '_')
 
+DOCKER_COMPOSE := $(shell docker compose > /dev/null 2>&1; retVal=$$?; if [ $$retVal -ne 0 ]; then  echo "docker-compose"; else echo "docker compose"; fi;)
+
 CONDA = conda/miniconda/bin/conda
 ENV_PYTHON = venv/bin/python3.9
 
@@ -109,9 +111,9 @@ docker_test: python_computing_node/execution_environment/test_execution_environm
 	mkdir -p run
 	mkdir -p logs
 	@echo "Testing..."
-	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-test.yml up -d --build
+	CURRENT_UID=$$(id -u):$$(id -g) $(DOCKER_COMPOSE) -f docker-compose-test.yml up -d --build
 	sleep 15
-	CURRENT_UID=$$(id -u):$$(id -g) docker-compose -f docker-compose-test.yml exec -T python_computing_node python -m unittest discover -s tests
+	CURRENT_UID=$$(id -u):$$(id -g) $(DOCKER_COMPOSE) -f docker-compose-test.yml exec -T python_computing_node python -m unittest discover -s tests
 	-$(call clean_docker_containers)
 
 clean_docker_test:
